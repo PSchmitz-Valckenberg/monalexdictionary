@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monalex</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <header>
+        <h1>Bienvenue à Monalex: le dictionaire monegasque, u diçiunari munegascu</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                <li><a href="{{ url_for('search') }}">Recherche</a></li>
+                <li><a href="{{ url_for('conjugaison') }}">Conjugaison</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2023 Dictionnaire français-monegasque. Tous droits réservés.</p>
+    </footer>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

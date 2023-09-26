@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
+
+{% block navigator %}
+    <!-- Include the navigator here if it's defined in the base.html template -->
+{% endblock %}
+
+{% block content %}
+    <h2 class="title">Découvrez la beauté de la langue monegasque</h2>
+    <p class="description">Explorez le riche patrimoine linguistique de Monaco et apprenez des mots et des phrases en monegasque.</p>
+
+    <h2 class="section-title">Rechercher de verbes conjugués</h2>
+    
+    <p class="note">Cette section est réservée à la recherche de terminaison. Vous pouvez y rechercher le groupe d'un verbe et trouver sa conjugaison.</p>
+    
+    <div class="verb-selection">
+        <p>Est-ce que ton verbe fait partie de ceux là?</p>
+        <a href="{{ url_for('etre_conjugation') }}" class="monaco-button">Être</a>
+        <a href="{{ url_for('avoir_conjugation') }}" class="monaco-button">Avoir</a>
+        
+        <p>Quelle est la terminaison de ton verbe(en monégasque)?</p>
+        <a href="{{ url_for('premier') }}" class="monaco-button">à (1er groupe)</a>
+        <a href="{{ url_for('deuxieme') }}" class="monaco-button">e (2ème groupe)</a>
+        <a href="{{ url_for('troisieme') }}" class="monaco-button">i (3ème groupe)</a>
+    </div>
+    </div>
+{% endblock %}

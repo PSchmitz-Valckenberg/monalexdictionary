@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h2 class="title">Conjugaison du verbe "Être"</h2>
+    <style>
+        /* Optional: Add more styling for the image */
+        img {
+            width: 700px;
+            display: block; /* Ensures the image is a block element */
+            margin: 0; /* Optional: Removes default margin */
+        }
+    </style>
+    <img src="{{ url_for('static', filename='etre.png') }}" >
+    
+
+{% endblock %}

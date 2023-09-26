@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h2 class="title">Conjugaison des verbes du 1er groupe(terminaisons)</h2>
+    <h3 class="title">Exceptions:</h3>
+    <div style="margin-bottom: 20px;">
+        <!-- Update the href attribute to "exceptions_premier" for each link -->
+        <a href="{{ url_for('exceptions_premier') }}" class="monaco-button">Aller</a>
+        <a href="{{ url_for('exceptions_premier') }}" class="monaco-button">Donner</a>
+        <a href="{{ url_for('exceptions_premier') }}" class="monaco-button">Rester</a>
+        <a href="{{ url_for('exceptions_premier') }}" class="monaco-button">Faire</a>
+    </div>
+
+    <body> Ici, nous avons l'exemple du verbe aimà, toutes les terminaisons s'appliquent 
+        après le aim, ainsi on peut l'appliquer avec n'importe quel autre verbe en remplaçant sont infinitif sans la terminaison
+        par les terminaisons ci-dessous
+    </body>
+    <style>
+        /* Optional: Add more styling for the image */
+        img {
+            width: 700px;
+            display: block; /* Ensures the image is a block element */
+            margin: 0; /* Optional: Removes default margin */
+        }
+    </style>
+    <img src="{{ url_for('static', filename='1er.png') }}" >
+    
+
+{% endblock %}

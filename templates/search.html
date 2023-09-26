@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h2 class="title">Découvrez la beauté de la langue monegasque</h2>
+    <p class="description">Explorez le riche patrimoine linguistique de Monaco et apprenez des mots et des phrases en monegasque.</p>
+
+    <h2 class="section-title">Rechercher des mots</h2>
+    
+    <form id="searchForm" class="search-form">
+        <input type="text" id="searchInput" name="searchInput" placeholder="Entrez un mot" class="search-input">
+        <button type="submit" class="search-button">Rechercher</button>
+    </form>
+    
+    <div id="searchResults" class="search-results" >
+        {% if results %}
+            <h3 class="results-title">Résultats :</h3>
+            <ul class="results-list">
+                {% for result in results %}
+                    <li>{{ result[0] }} - {{ result[1] }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-results">Aucun résultat trouvé.</p>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

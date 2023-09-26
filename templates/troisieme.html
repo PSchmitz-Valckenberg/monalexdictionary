@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h2 class="title">Conjugaison des verbes du 3eme groupe(terminaisons)</h2>
+    
+    <body> Ici, nous avons l'exemple du verbe finì, toutes les terminaisons s'appliquent 
+        après le fin, ainsi on peut l'appliquer avec n'importe quel autre verbe en remplaçant sont infinitif sans la terminaison
+        par les terminaisons ci-dessous <strong> Attention, les verbes dire, entendre, partager et venir ont quelques exceptions, voir ci-dessous</strong>
+    </body>
+    <style>
+        /* Optional: Add more styling for the image */
+        img {
+            width: 700px;
+            display: block; /* Ensures the image is a block element */
+            margin: 0; /* Optional: Removes default margin */
+        }
+    </style>
+    <img src="{{ url_for('static', filename='3eme.png') }}" >
+    
+
+{% endblock %}
