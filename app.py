@@ -14,6 +14,7 @@ mysql_user = os.environ.get("MYSQL_USER", "root")
 mysql_password = os.environ.get("MYSQL_PASSWORD", "Benamira05")
 mysql_database = os.environ.get("MYSQL_DATABASE", "mydictionary")
 
+print("MySQL Host:")
 
 # JawsDB MySQL configuration
 mysql_url = os.environ.get("JAWSDB_URL")
