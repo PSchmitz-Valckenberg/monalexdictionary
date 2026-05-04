@@ -8,7 +8,7 @@ the JSON API.
 
 | Component | Responsibility |
 |-----------|----------------|
-| `app.py` | Flask app, route definitions, MySQL/OpenAI configuration, search helper, AI helper, error handlers. |
+| `app.py` | Flask app, route definitions, MySQL/SQLite/OpenAI configuration, search helper, AI helper, error handlers. |
 | `templates/` | Server-rendered Jinja pages for dictionary search and conjugation views. |
 | `static/` | CSS, small browser script, and historical/conjugation image assets. |
 | `dictionary.sql` | MySQL dump used to bootstrap the dictionary table locally. |
@@ -21,9 +21,11 @@ the JSON API.
 2. Flask trims the query and skips the database for empty searches.
 3. `search_dictionary_entries()` opens a MySQL connection from environment
    configuration.
-4. The query searches both `word` and `definition`, orders by `word`, and caps
+4. If MySQL is unavailable and the fallback is enabled, the app builds or reuses
+   a SQLite cache generated from `dictionary.sql`.
+5. The query searches both `word` and `definition`, orders by `word`, and caps
    results with `SEARCH_LIMIT`.
-5. Flask returns either rendered HTML or structured JSON from the same result
+6. Flask returns either rendered HTML or structured JSON from the same result
    set.
 
 ## AI Helper Flow
@@ -53,6 +55,8 @@ the same values as environment variables.
 | `MYSQL_DATABASE` | `dictionary` | Database name. |
 | `MYSQL_TABLE` | `dictionary` | Dictionary table name. Limited to letters, numbers, and underscores. |
 | `SEARCH_LIMIT` | `50` | Maximum rendered/API search results. Must be between 1 and 200. |
+| `ENABLE_SQLITE_FALLBACK` | `1` | Enables local fallback search when MySQL cannot connect. |
+| `SQLITE_FALLBACK_PATH` | `instance/monalex_dictionary.sqlite3` | Generated fallback cache path. |
 | `APP_VERSION` | `0.2.0` | Version string returned by `/healthz`. |
 | `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
 | `OPENAI_MODEL` | `gpt-5.4-mini` | Model used for AI explanations. |
@@ -62,6 +66,8 @@ the same values as environment variables.
 
 - Empty searches avoid unnecessary database connections.
 - Database failures return user-facing error states instead of raw tracebacks.
+- Local search can continue from the generated SQLite cache when MySQL is not
+  running.
 - `/healthz` is independent from MySQL so platform health checks do not fail
   during transient database maintenance.
 - The AI helper is isolated behind its own endpoint and does not affect normal

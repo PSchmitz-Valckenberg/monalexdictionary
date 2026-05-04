@@ -118,7 +118,11 @@ class MonalexAppTests(unittest.TestCase):
         get_db_connection.assert_not_called()
 
     def test_api_search_handles_database_connection_error(self):
-        with patch.object(app_module, "get_db_connection", return_value=None):
+        with patch.object(app_module, "get_db_connection", return_value=None), patch.object(
+            app_module,
+            "search_sqlite_fallback_entries",
+            return_value=None,
+        ):
             response = self.client.get("/api/search?q=bonjour")
 
         self.assertEqual(response.status_code, 503)
@@ -172,7 +176,11 @@ class MonalexAppTests(unittest.TestCase):
         generate_ai_explanation.assert_called_once_with("bonjour", "bun giurnu")
 
     def test_search_handles_database_connection_error(self):
-        with patch.object(app_module, "get_db_connection", return_value=None):
+        with patch.object(app_module, "get_db_connection", return_value=None), patch.object(
+            app_module,
+            "search_sqlite_fallback_entries",
+            return_value=None,
+        ):
             response = self.client.get("/search?searchInput=accueillir")
 
         self.assertEqual(response.status_code, 503)
@@ -180,6 +188,19 @@ class MonalexAppTests(unittest.TestCase):
             "Connexion à la base de données impossible.",
             response.get_data(as_text=True),
         )
+
+    def test_search_uses_sqlite_fallback_when_mysql_is_unavailable(self):
+        fallback_results = [{"word": "bonjour", "definition": "bun giurnu"}]
+
+        with patch.object(app_module, "get_db_connection", return_value=None), patch.object(
+            app_module,
+            "search_sqlite_fallback_entries",
+            return_value=fallback_results,
+        ):
+            response = self.client.get("/api/search?q=bonjour")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["results"], fallback_results)
 
     def test_health_endpoint_returns_service_metadata(self):
         response = self.client.get("/healthz")

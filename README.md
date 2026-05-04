@@ -81,6 +81,8 @@ values as environment variables.
 | `MYSQL_DATABASE` | `dictionary` | Database name. |
 | `MYSQL_TABLE` | `dictionary` | Dictionary table name. |
 | `SEARCH_LIMIT` | `50` | Maximum results returned by search. |
+| `ENABLE_SQLITE_FALLBACK` | `1` | Enables local SQLite fallback when MySQL is unavailable. |
+| `SQLITE_FALLBACK_PATH` | `instance/monalex_dictionary.sqlite3` | Generated SQLite cache path. |
 | `APP_VERSION` | `0.2.0` | Version returned by `/healthz`. |
 | `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
 | `OPENAI_MODEL` | `gpt-5.4-mini` | Model used by the AI helper. |
@@ -149,3 +151,7 @@ LIMIT 50;
 
 Set `MYSQL_TABLE` only if you intentionally import the data under another table
 name.
+
+When MySQL is not reachable, Monalex can build a local SQLite cache from
+`dictionary.sql` and keep search working. This is meant for local development,
+demo deployments, and environments where starting MySQL is inconvenient.
