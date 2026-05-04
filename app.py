@@ -187,7 +187,10 @@ def get_db_connection():
     try:
         return mysql.connector.connect(**MYSQL_CONFIG)
     except mysql.connector.Error as e:
-        app.logger.error(f"Error connecting to the database: {e}")
+        if ENABLE_SQLITE_FALLBACK:
+            app.logger.warning(f"MySQL unavailable; using SQLite fallback: {e}")
+        else:
+            app.logger.error(f"Error connecting to the database: {e}")
         return None
 
 
