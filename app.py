@@ -1,3 +1,4 @@
+import json
 import os
 from urllib.parse import urlparse
 
@@ -11,6 +12,68 @@ load_dotenv()
 
 APP_NAME = "Monalex Dictionary"
 APP_VERSION = os.environ.get("APP_VERSION", "0.2.0")
+DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+
+AI_EXPLANATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary_fr": {
+            "type": "string",
+            "description": "Short learner-friendly French explanation.",
+        },
+        "usage_notes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Two or three practical notes about usage or nuance.",
+        },
+        "examples": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "fr": {"type": "string"},
+                    "monegasque": {"type": "string"},
+                },
+                "required": ["fr", "monegasque"],
+                "additionalProperties": False,
+            },
+            "description": "Two short French/Monégasque example pairs.",
+        },
+        "memory_tip": {
+            "type": "string",
+            "description": "A concrete memory tip in French.",
+        },
+        "practice_question": {
+            "type": "string",
+            "description": "A short practice question for the learner.",
+        },
+    },
+    "required": [
+        "summary_fr",
+        "usage_notes",
+        "examples",
+        "memory_tip",
+        "practice_question",
+    ],
+    "additionalProperties": False,
+}
+
+AI_RESPONSE_FORMAT = {
+    "format": {
+        "type": "json_schema",
+        "name": "monalex_ai_explanation",
+        "strict": True,
+        "schema": AI_EXPLANATION_SCHEMA,
+    }
+}
+
+AI_INSTRUCTIONS = (
+    "Tu es un assistant pédagogique pour Monalex, un dictionnaire français-"
+    "monégasque. Utilise uniquement l'entrée fournie. N'invente pas "
+    "d'étymologie ou de règle grammaticale non visible dans l'entrée. "
+    "Réponds en français clair, avec des exemples courts et prudents."
+)
 
 
 def get_positive_int(name, default, maximum=None):
@@ -51,6 +114,7 @@ def get_mysql_config():
 MYSQL_CONFIG = get_mysql_config()
 MYSQL_TABLE = os.environ.get("MYSQL_TABLE", "dictionary")
 SEARCH_LIMIT = get_positive_int("SEARCH_LIMIT", 50, maximum=200)
+AI_INPUT_LIMIT = get_positive_int("AI_INPUT_LIMIT", 1200, maximum=4000)
 validate_mysql_table_name(MYSQL_TABLE)
 
 
@@ -139,6 +203,47 @@ def search_dictionary_entries(query):
         connection.close()
 
 
+def is_ai_configured():
+    return bool(os.environ.get("OPENAI_API_KEY"))
+
+
+def clean_ai_input(value):
+    return str(value or "").strip()[:AI_INPUT_LIMIT]
+
+
+def generate_ai_explanation(word, definition):
+    if not is_ai_configured():
+        return None, "Assistant IA non configuré. Définissez OPENAI_API_KEY pour l'activer.", 503
+
+    try:
+        from openai import OpenAI, OpenAIError
+    except ImportError:
+        return None, "SDK OpenAI absent. Lancez pip install -r requirements.txt.", 500
+
+    prompt = (
+        "Explique cette entrée du dictionnaire pour un apprenant.\n\n"
+        f"Mot français: {clean_ai_input(word)}\n"
+        f"Traduction / définition monégasque: {clean_ai_input(definition)}"
+    )
+
+    try:
+        client = OpenAI()
+        response = client.responses.create(
+            model=OPENAI_MODEL,
+            instructions=AI_INSTRUCTIONS,
+            input=prompt,
+            text=AI_RESPONSE_FORMAT,
+            max_output_tokens=900,
+        )
+        return json.loads(response.output_text), None, 200
+    except OpenAIError as e:
+        app.logger.error(f"OpenAI request failed: {e}")
+        return None, "La requête vers l'assistant IA a échoué.", 502
+    except (json.JSONDecodeError, AttributeError) as e:
+        app.logger.error(f"Invalid AI helper response: {e}")
+        return None, "L'assistant IA a renvoyé une réponse invalide.", 502
+
+
 @app.route("/search", methods=["GET"])
 def search():
     query = request.args.get("searchInput", "").strip()
@@ -159,6 +264,29 @@ def search():
     return render_template("search.html", query=query, results=results, searched=True)
 
 
+@app.route("/api/ai/explain", methods=["POST"])
+def api_ai_explain():
+    payload = request.get_json(silent=True) or {}
+    word = clean_ai_input(payload.get("word"))
+    definition = clean_ai_input(payload.get("definition"))
+
+    if not word or not definition:
+        return jsonify({"error": "word and definition are required."}), 400
+
+    explanation, error_message, status_code = generate_ai_explanation(word, definition)
+    if error_message:
+        return jsonify({"error": error_message}), status_code
+
+    return jsonify(
+        {
+            "word": word,
+            "definition": definition,
+            "model": OPENAI_MODEL,
+            "explanation": explanation,
+        }
+    )
+
+
 @app.route("/api/search", methods=["GET"])
 def api_search():
     query = request.args.get("q", request.args.get("searchInput", "")).strip()
@@ -175,7 +303,17 @@ def api_search():
 
 @app.route("/healthz", methods=["GET"])
 def healthz():
-    return jsonify({"service": APP_NAME, "status": "ok", "version": APP_VERSION})
+    return jsonify(
+        {
+            "service": APP_NAME,
+            "status": "ok",
+            "version": APP_VERSION,
+            "ai": {
+                "configured": is_ai_configured(),
+                "model": OPENAI_MODEL,
+            },
+        }
+    )
 
 
 @app.after_request

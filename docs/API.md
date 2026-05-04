@@ -67,6 +67,47 @@ Example:
 curl "http://127.0.0.1:5000/search?searchInput=bonjour"
 ```
 
+## `POST /api/ai/explain`
+
+Generates a learner-friendly study card for one dictionary result. This endpoint
+is optional and requires `OPENAI_API_KEY`.
+
+Request:
+
+```bash
+curl -X POST "http://127.0.0.1:5000/api/ai/explain" \
+  -H "Content-Type: application/json" \
+  -d '{"word":"bonjour","definition":"bun giurnu"}'
+```
+
+Successful response:
+
+```json
+{
+  "word": "bonjour",
+  "definition": "bun giurnu",
+  "model": "gpt-5.4-mini",
+  "explanation": {
+    "summary_fr": "Une salutation simple et quotidienne.",
+    "usage_notes": [
+      "À utiliser pour saluer quelqu'un.",
+      "Convient dans un contexte poli ou neutre."
+    ],
+    "examples": [
+      {
+        "fr": "Bonjour.",
+        "monegasque": "Bun giurnu."
+      }
+    ],
+    "memory_tip": "Rapproche bun de bon et giurnu de jour.",
+    "practice_question": "Comment saluerais-tu une personne le matin ?"
+  }
+}
+```
+
+If the key is missing, the endpoint returns HTTP `503` with a configuration
+message. The browser UI surfaces this message inside the result card.
+
 ## Conjugation Pages
 
 The app keeps the original `.html` routes for compatibility and also exposes
@@ -93,6 +134,10 @@ Example response:
 {
   "service": "Monalex Dictionary",
   "status": "ok",
-  "version": "0.2.0"
+  "version": "0.2.0",
+  "ai": {
+    "configured": false,
+    "model": "gpt-5.4-mini"
+  }
 }
 ```

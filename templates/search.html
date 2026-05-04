@@ -26,8 +26,19 @@
             <h3 class="results-title">Résultats :</h3>
             <dl class="results-list">
                 {% for result in results %}
-                    <dt>{{ result.word }}</dt>
-                    <dd>{{ result.definition }}</dd>
+                    <div class="result-item">
+                        <dt>{{ result.word }}</dt>
+                        <dd>{{ result.definition }}</dd>
+                        <button
+                            type="button"
+                            class="ai-explain-button"
+                            data-word="{{ result.word }}"
+                            data-definition="{{ result.definition }}"
+                        >
+                            Assistant IA
+                        </button>
+                        <div class="ai-explanation" aria-live="polite" hidden></div>
+                    </div>
                 {% endfor %}
             </dl>
         {% elif searched %}

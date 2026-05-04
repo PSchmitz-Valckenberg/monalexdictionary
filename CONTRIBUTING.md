@@ -25,6 +25,8 @@ make run
 - Do not commit real credentials or local `.env` files.
 - If a code change depends on new environment variables, update
   `.env.example`, `README.md`, and `docs/ARCHITECTURE.md`.
+- AI helper changes should keep responses structured and covered by tests. Do
+  not make normal dictionary search depend on an OpenAI API key.
 
 ## Pull Request Checklist
 

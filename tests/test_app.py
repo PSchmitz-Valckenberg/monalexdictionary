@@ -127,6 +127,50 @@ class MonalexAppTests(unittest.TestCase):
             "Connexion à la base de données impossible.",
         )
 
+    def test_ai_explain_requires_word_and_definition(self):
+        response = self.client.post("/api/ai/explain", json={"word": "bonjour"})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "word and definition are required.")
+
+    def test_ai_explain_reports_missing_configuration(self):
+        with patch.dict(app_module.os.environ, {"OPENAI_API_KEY": ""}):
+            response = self.client.post(
+                "/api/ai/explain",
+                json={"word": "bonjour", "definition": "bun giurnu"},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("OPENAI_API_KEY", response.get_json()["error"])
+
+    def test_ai_explain_returns_generated_payload(self):
+        explanation = {
+            "summary_fr": "Une salutation courante.",
+            "usage_notes": ["Utilisable le matin.", "Forme polie."],
+            "examples": [
+                {"fr": "Bonjour.", "monegasque": "Bun giurnu."},
+                {"fr": "Bonjour à tous.", "monegasque": "Bun giurnu a tüti."},
+            ],
+            "memory_tip": "Associe bun à bon.",
+            "practice_question": "Comment saluerais-tu un ami ?",
+        }
+
+        with patch.object(
+            app_module,
+            "generate_ai_explanation",
+            return_value=(explanation, None, 200),
+        ) as generate_ai_explanation:
+            response = self.client.post(
+                "/api/ai/explain",
+                json={"word": "bonjour", "definition": "bun giurnu"},
+            )
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["word"], "bonjour")
+        self.assertEqual(payload["explanation"], explanation)
+        generate_ai_explanation.assert_called_once_with("bonjour", "bun giurnu")
+
     def test_search_handles_database_connection_error(self):
         with patch.object(app_module, "get_db_connection", return_value=None):
             response = self.client.get("/search?searchInput=accueillir")
@@ -145,6 +189,9 @@ class MonalexAppTests(unittest.TestCase):
         self.assertEqual(payload["service"], "Monalex Dictionary")
         self.assertEqual(payload["status"], "ok")
         self.assertIn("version", payload)
+        self.assertIn("ai", payload)
+        self.assertIn("configured", payload["ai"])
+        self.assertIn("model", payload["ai"])
 
     def test_url_generation_prefers_clean_routes(self):
         with app_module.app.test_request_context():

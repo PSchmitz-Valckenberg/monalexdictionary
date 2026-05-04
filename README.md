@@ -15,6 +15,8 @@ suite that runs without a local database.
 - French -> Monégasque dictionary search backed by MySQL.
 - Browser UI built with Flask/Jinja templates and responsive CSS.
 - JSON search API at `/api/search` for future frontend, mobile, or data tools.
+- Optional AI study helper that explains dictionary entries, suggests examples,
+  creates memory tips, and produces practice prompts.
 - Lightweight `/healthz` endpoint for deployment health checks.
 - Environment-based configuration with `.env.example` and `JAWSDB_URL` support.
 - Security headers added on every response.
@@ -80,6 +82,9 @@ values as environment variables.
 | `MYSQL_TABLE` | `dictionary` | Dictionary table name. |
 | `SEARCH_LIMIT` | `50` | Maximum results returned by search. |
 | `APP_VERSION` | `0.2.0` | Version returned by `/healthz`. |
+| `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
+| `OPENAI_MODEL` | `gpt-5.4-mini` | Model used by the AI helper. |
+| `AI_INPUT_LIMIT` | `1200` | Per-field character limit before sending dictionary text to the AI model. |
 
 ## Commands
 
@@ -98,6 +103,7 @@ make clean    # remove local Python cache files
 | `/` | HTML | Landing/history page. |
 | `/search` | HTML | Browser-facing dictionary search. |
 | `/api/search?q=...` | JSON | Programmatic dictionary search. |
+| `/api/ai/explain` | JSON | Optional AI explanation for one dictionary entry. |
 | `/conjugaison` | HTML | Verb group navigation. |
 | `/conjugaison/premier` | HTML | Clean URL for first-group verb endings. |
 | `/conjugaison/deuxieme` | HTML | Clean URL for second-group verb endings. |
@@ -122,6 +128,8 @@ The app keeps the runtime deliberately compact:
 - `search_dictionary_entries()` is the single database-backed search path.
 - `/search` and `/api/search` reuse that path and only differ in response
   format.
+- `/api/ai/explain` turns one dictionary result into a learner-friendly study
+  card when `OPENAI_API_KEY` is configured.
 - `/healthz` does not query MySQL, so health checks stay fast and stable.
 - Error handlers render friendly pages instead of exposing tracebacks.
 
