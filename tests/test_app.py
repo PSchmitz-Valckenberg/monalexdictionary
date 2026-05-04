@@ -241,6 +241,14 @@ class MonalexAppTests(unittest.TestCase):
         self.assertIn("og:title", html)
         self.assertIn("twitter:card", html)
 
+    def test_navigation_marks_current_page(self):
+        response = self.client.get("/search")
+        html = response.get_data(as_text=True)
+
+        self.assertIn('href="/search" aria-current="page"', html)
+        self.assertIn("Aller au contenu", html)
+        self.assertIn('id="main-content"', html)
+
     def test_robots_txt_references_sitemap(self):
         response = self.client.get("/robots.txt")
 

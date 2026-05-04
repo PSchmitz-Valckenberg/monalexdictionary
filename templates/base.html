@@ -16,6 +16,7 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Aller au contenu</a>
     <header class="site-header">
         <div class="site-header__inner">
             <a class="brand" href="{{ url_for('home') }}" aria-label="Monalex accueil">
@@ -27,14 +28,20 @@
             </a>
             <nav class="site-nav" aria-label="Navigation principale">
             <ul>
-                <li><a href="{{ url_for('home') }}">Accueil</a></li>
-                <li><a href="{{ url_for('search') }}">Recherche</a></li>
-                <li><a href="{{ url_for('conjugaison') }}">Conjugaison</a></li>
+                <li>
+                    <a href="{{ url_for('home') }}" {% if current_endpoint == 'home' %}aria-current="page"{% endif %}>Accueil</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('search') }}" {% if current_endpoint in ['search', 'api_search'] %}aria-current="page"{% endif %}>Recherche</a>
+                </li>
+                <li>
+                    <a href="{{ url_for('conjugaison') }}" {% if current_endpoint in ['conjugaison', 'premier', 'deuxieme', 'troisieme', 'etre_conjugation', 'avoir_conjugation', 'exceptions_premier', 'exceptions_deuxieme'] %}aria-current="page"{% endif %}>Conjugaison</a>
+                </li>
             </ul>
             </nav>
         </div>
     </header>
-    <main class="page-shell">
+    <main id="main-content" class="page-shell" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
     <footer class="site-footer">

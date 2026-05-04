@@ -162,6 +162,7 @@ def inject_site_metadata():
         "app_name": APP_NAME,
         "default_meta_description": DEFAULT_META_DESCRIPTION,
         "site_url": SITE_URL,
+        "current_endpoint": request.endpoint or "",
     }
 
 
