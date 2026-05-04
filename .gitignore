@@ -5,7 +5,15 @@ bin/
 include/
 lib/
 pyvenv.cfg
+click/
 *.dist-info/
+*.egg-info/
 __pycache__/
 *.py[cod]
+.coverage
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+*.log
+instance/
 .DS_Store

@@ -1,13 +1,16 @@
 import os
 from urllib.parse import urlparse
 
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import mysql.connector
 from dotenv import load_dotenv
 
 
 app = Flask(__name__, template_folder='templates')
 load_dotenv()
+
+APP_NAME = "Monalex Dictionary"
+APP_VERSION = os.environ.get("APP_VERSION", "0.2.0")
 
 
 def get_positive_int(name, default, maximum=None):
@@ -17,6 +20,11 @@ def get_positive_int(name, default, maximum=None):
     if maximum is not None and value > maximum:
         raise ValueError(f"{name} must be at most {maximum}.")
     return value
+
+
+def validate_mysql_table_name(table_name):
+    if not table_name.replace("_", "").isalnum():
+        raise ValueError("MYSQL_TABLE must contain only letters, numbers, and underscores.")
 
 
 def get_mysql_config():
@@ -43,48 +51,60 @@ def get_mysql_config():
 MYSQL_CONFIG = get_mysql_config()
 MYSQL_TABLE = os.environ.get("MYSQL_TABLE", "dictionary")
 SEARCH_LIMIT = get_positive_int("SEARCH_LIMIT", 50, maximum=200)
+validate_mysql_table_name(MYSQL_TABLE)
 
-if not MYSQL_TABLE.replace("_", "").isalnum():
-    raise ValueError("MYSQL_TABLE must contain only letters, numbers, and underscores.")
 
-@app.route('/exceptions_premier.html', )
+@app.route("/exceptions_premier.html")
+@app.route("/exceptions/premier")
 def exceptions_premier():
-    return render_template('exceptions_premier.html')
+    return render_template("exceptions_premier.html")
 
-@app.route('/exception_deuxieme.html',  endpoint='exceptions_deuxieme')
+
+@app.route("/exception_deuxieme.html", endpoint="exceptions_deuxieme")
+@app.route("/exceptions/deuxieme", endpoint="exceptions_deuxieme")
 def exception_deuxieme():
-    return render_template('exceptions_deuxieme.html')
+    return render_template("exceptions_deuxieme.html")
 
 
-@app.route('/premier.html')
+@app.route("/premier.html")
+@app.route("/conjugaison/premier")
 def premier():
-    return render_template('premier.html')
+    return render_template("premier.html")
 
-@app.route('/deuxieme.html')
+
+@app.route("/deuxieme.html")
+@app.route("/conjugaison/deuxieme")
 def deuxieme():
-    return render_template('deuxieme.html')
+    return render_template("deuxieme.html")
 
-@app.route('/troisieme.html')
+
+@app.route("/troisieme.html")
+@app.route("/conjugaison/troisieme")
 def troisieme():
-    return render_template('troisieme.html')
+    return render_template("troisieme.html")
 
 
-@app.route('/etre_conjugation')
+@app.route("/etre_conjugation")
+@app.route("/conjugaison/etre")
 def etre_conjugation():
-    app.logger.debug("etre_conjugation view function is executed.")
-    return render_template('etre_conjugation.html')
+    return render_template("etre_conjugation.html")
 
-@app.route('/avoir_conjugation')
+
+@app.route("/avoir_conjugation")
+@app.route("/conjugaison/avoir")
 def avoir_conjugation():
-    return render_template('avoir_conjugation.html')
+    return render_template("avoir_conjugation.html")
 
-@app.route('/')
+
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/conjugaison', methods=['GET'])
+
+@app.route("/conjugaison", methods=["GET"])
 def conjugaison():
-    return render_template('conjugaison.html')
+    return render_template("conjugaison.html")
+
 
 def get_db_connection():
     try:
@@ -93,22 +113,11 @@ def get_db_connection():
         app.logger.error(f"Error connecting to the database: {e}")
         return None
 
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('searchInput', '').strip()
 
-    if not query:
-        return render_template('search.html', query=query, results=[], searched=False)
-
+def search_dictionary_entries(query):
     connection = get_db_connection()
     if connection is None:
-        return render_template(
-            'search.html',
-            query=query,
-            results=[],
-            searched=True,
-            error_message="Connexion à la base de données impossible.",
-        ), 503
+        return None, "Connexion à la base de données impossible.", 503
 
     cursor = connection.cursor(dictionary=True)
 
@@ -121,38 +130,73 @@ def search():
             f"LIMIT {SEARCH_LIMIT}"
         )
         cursor.execute(sql_query, (search_term, search_term))
-        results = cursor.fetchall()
+        return cursor.fetchall(), None, 200
     except mysql.connector.Error as e:
         app.logger.error(f"Error running search query: {e}")
-        return render_template(
-            'search.html',
-            query=query,
-            results=[],
-            searched=True,
-            error_message="La recherche a échoué.",
-        ), 500
+        return None, "La recherche a échoué.", 500
     finally:
         cursor.close()
         connection.close()
 
-    return render_template('search.html', query=query, results=results, searched=True)
+
+@app.route("/search", methods=["GET"])
+def search():
+    query = request.args.get("searchInput", "").strip()
+
+    if not query:
+        return render_template("search.html", query=query, results=[], searched=False)
+
+    results, error_message, status_code = search_dictionary_entries(query)
+    if error_message:
+        return render_template(
+            "search.html",
+            query=query,
+            results=[],
+            searched=True,
+            error_message=error_message,
+        ), status_code
+
+    return render_template("search.html", query=query, results=results, searched=True)
+
+
+@app.route("/api/search", methods=["GET"])
+def api_search():
+    query = request.args.get("q", request.args.get("searchInput", "")).strip()
+
+    if not query:
+        return jsonify({"query": query, "count": 0, "results": []})
+
+    results, error_message, status_code = search_dictionary_entries(query)
+    if error_message:
+        return jsonify({"query": query, "error": error_message, "results": []}), status_code
+
+    return jsonify({"query": query, "count": len(results), "results": results})
+
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return jsonify({"service": APP_NAME, "status": "ok", "version": APP_VERSION})
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    return response
 
 
 @app.errorhandler(404)
 def not_found(error):
-    return render_template('error.html', error_message="Page introuvable."), 404
+    return render_template("error.html", error_message="Page introuvable."), 404
 
 
 @app.errorhandler(500)
 def server_error(error):
-    return render_template('error.html', error_message="Erreur interne du serveur."), 500
-
+    return render_template("error.html", error_message="Erreur interne du serveur."), 500
 
 
 if __name__ == "__main__":
     # Use the PORT environment variable if available (for Heroku)
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
-
-
-
+    app.run(host="0.0.0.0", port=port)

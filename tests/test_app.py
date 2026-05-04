@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
 
+from flask import url_for
+
 import app as app_module
 
 
@@ -50,6 +52,13 @@ class MonalexAppTests(unittest.TestCase):
             "/avoir_conjugation",
             "/exceptions_premier.html",
             "/exception_deuxieme.html",
+            "/conjugaison/premier",
+            "/conjugaison/deuxieme",
+            "/conjugaison/troisieme",
+            "/conjugaison/etre",
+            "/conjugaison/avoir",
+            "/exceptions/premier",
+            "/exceptions/deuxieme",
         ]
 
         for path in paths:
@@ -84,6 +93,40 @@ class MonalexAppTests(unittest.TestCase):
         self.assertIn("LIMIT 50", cursor.executed[0])
         self.assertEqual(cursor.executed[1], ("%accueillir%", "%accueillir%"))
 
+    def test_api_search_returns_json_results(self):
+        cursor = FakeCursor(
+            [{"word": "bonjour", "definition": "bun giurnu"}]
+        )
+        connection = FakeConnection(cursor)
+
+        with patch.object(app_module, "get_db_connection", return_value=connection):
+            response = self.client.get("/api/search?q=bonjour")
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["query"], "bonjour")
+        self.assertEqual(payload["count"], 1)
+        self.assertEqual(payload["results"][0]["word"], "bonjour")
+        self.assertEqual(payload["results"][0]["definition"], "bun giurnu")
+
+    def test_api_search_handles_empty_query(self):
+        with patch.object(app_module, "get_db_connection") as get_db_connection:
+            response = self.client.get("/api/search")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"query": "", "count": 0, "results": []})
+        get_db_connection.assert_not_called()
+
+    def test_api_search_handles_database_connection_error(self):
+        with patch.object(app_module, "get_db_connection", return_value=None):
+            response = self.client.get("/api/search?q=bonjour")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(
+            response.get_json()["error"],
+            "Connexion à la base de données impossible.",
+        )
+
     def test_search_handles_database_connection_error(self):
         with patch.object(app_module, "get_db_connection", return_value=None):
             response = self.client.get("/search?searchInput=accueillir")
@@ -93,6 +136,33 @@ class MonalexAppTests(unittest.TestCase):
             "Connexion à la base de données impossible.",
             response.get_data(as_text=True),
         )
+
+    def test_health_endpoint_returns_service_metadata(self):
+        response = self.client.get("/healthz")
+
+        payload = response.get_json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["service"], "Monalex Dictionary")
+        self.assertEqual(payload["status"], "ok")
+        self.assertIn("version", payload)
+
+    def test_url_generation_prefers_clean_routes(self):
+        with app_module.app.test_request_context():
+            self.assertEqual(url_for("premier"), "/conjugaison/premier")
+            self.assertEqual(url_for("deuxieme"), "/conjugaison/deuxieme")
+            self.assertEqual(url_for("troisieme"), "/conjugaison/troisieme")
+            self.assertEqual(url_for("exceptions_premier"), "/exceptions/premier")
+            self.assertEqual(url_for("exceptions_deuxieme"), "/exceptions/deuxieme")
+
+    def test_responses_include_security_headers(self):
+        response = self.client.get("/")
+
+        self.assertEqual(
+            response.headers["Referrer-Policy"],
+            "strict-origin-when-cross-origin",
+        )
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(response.headers["X-Frame-Options"], "SAMEORIGIN")
 
     def test_missing_page_returns_custom_404(self):
         response = self.client.get("/missing")
