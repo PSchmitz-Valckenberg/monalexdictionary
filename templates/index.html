@@ -1,9 +1,18 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>Découvrez la beauté de la langue monégasque</h2>
-    <p>Explorez le riche patrimoine linguistique de Monaco et apprenez des mots et des phrases en monégasque.</p>
-    <h1>Histoire de la langue</h1>
+    <section class="home-intro">
+        <p class="eyebrow">Monaco linguistique</p>
+        <h1>Monalex</h1>
+        <p>Explorez le riche patrimoine linguistique de Monaco et apprenez des mots et des phrases en monégasque.</p>
+        <div class="home-actions">
+            <a href="{{ url_for('search') }}" class="monaco-button">Rechercher</a>
+            <a href="{{ url_for('conjugaison') }}" class="secondary-button">Conjugaison</a>
+        </div>
+    </section>
 
-    <img class="content-image" src="{{ url_for('static', filename='Histoire.png') }}" alt="Histoire de la langue monégasque">
+    <section class="history-section">
+        <h2>Histoire de la langue</h2>
+        <img class="content-image" src="{{ url_for('static', filename='Histoire.png') }}" alt="Histoire de la langue monégasque">
+    </section>
 {% endblock %}

@@ -1,21 +1,41 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2 class="title">Conjugaison</h2>
-    <p class="description">Explorez les groupes de verbes et leurs principales terminaisons en monégasque.</p>
+    <section class="conjugation-intro">
+        <p class="eyebrow">Verbes</p>
+        <h2 class="title">Conjugaison</h2>
+        <p class="description">Explorez les groupes de verbes et leurs principales terminaisons en monégasque.</p>
+    </section>
 
-    <h2 class="section-title">Rechercher des verbes conjugués</h2>
-    
-    <p class="note">Cette section est réservée à la recherche de terminaison. Vous pouvez y rechercher le groupe d'un verbe et trouver sa conjugaison.</p>
-    
-    <div class="verb-selection">
-        <p>Est-ce que ton verbe fait partie de ceux-là ?</p>
-        <a href="{{ url_for('etre_conjugation') }}" class="monaco-button">Être</a>
-        <a href="{{ url_for('avoir_conjugation') }}" class="monaco-button">Avoir</a>
-        
-        <p>Quelle est la terminaison de ton verbe (en monégasque) ?</p>
-        <a href="{{ url_for('premier') }}" class="monaco-button">à (1er groupe)</a>
-        <a href="{{ url_for('deuxieme') }}" class="monaco-button">e (2ème groupe)</a>
-        <a href="{{ url_for('troisieme') }}" class="monaco-button">i (3ème groupe)</a>
-    </div>
+    <section class="choice-section" aria-labelledby="irregular-title">
+        <h3 id="irregular-title" class="section-title">Verbes essentiels</h3>
+        <div class="choice-grid">
+            <a href="{{ url_for('etre_conjugation') }}" class="choice-card">
+                <span class="choice-card__label">Être</span>
+                <span class="choice-card__meta">Auxiliaire</span>
+            </a>
+            <a href="{{ url_for('avoir_conjugation') }}" class="choice-card">
+                <span class="choice-card__label">Avoir</span>
+                <span class="choice-card__meta">Auxiliaire</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="choice-section" aria-labelledby="groups-title">
+        <h3 id="groups-title" class="section-title">Groupes de verbes</h3>
+        <div class="choice-grid choice-grid--three">
+            <a href="{{ url_for('premier') }}" class="choice-card">
+                <span class="choice-card__label">à</span>
+                <span class="choice-card__meta">1er groupe</span>
+            </a>
+            <a href="{{ url_for('deuxieme') }}" class="choice-card">
+                <span class="choice-card__label">e</span>
+                <span class="choice-card__meta">2ème groupe</span>
+            </a>
+            <a href="{{ url_for('troisieme') }}" class="choice-card">
+                <span class="choice-card__label">i</span>
+                <span class="choice-card__meta">3ème groupe</span>
+            </a>
+        </div>
+    </section>
 {% endblock %}

@@ -216,6 +216,109 @@ input:focus-visible {
   box-shadow: var(--shadow);
 }
 
+.home-intro,
+.history-section,
+.conjugation-intro,
+.choice-section {
+  margin-bottom: 24px;
+}
+
+.home-intro {
+  min-height: 340px;
+  padding: 42px;
+  color: #fff;
+  background:
+    linear-gradient(90deg, rgba(24, 33, 40, 0.82), rgba(24, 33, 40, 0.44)),
+    url("Background.jpeg") center / cover;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.home-intro .eyebrow,
+.home-intro p {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.home-intro h1 {
+  margin: 0 0 12px;
+  font-size: clamp(46px, 9vw, 92px);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.secondary-button:hover {
+  color: var(--monaco-red);
+}
+
+.history-section {
+  padding-top: 10px;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 860px;
+}
+
+.choice-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.choice-card {
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 20px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.choice-card:hover {
+  border-color: rgba(200, 16, 46, 0.34);
+  box-shadow: 0 20px 44px rgba(24, 33, 40, 0.2);
+  transform: translateY(-2px);
+}
+
+.choice-card__label {
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.choice-card__meta {
+  align-self: end;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .button-group,
 .verb-selection {
   display: flex;
@@ -494,6 +597,21 @@ input:focus-visible {
 
   .monaco-button {
     width: 100%;
+  }
+
+  .home-intro {
+    min-height: 0;
+    padding: 28px;
+  }
+
+  .home-actions,
+  .secondary-button {
+    width: 100%;
+  }
+
+  .choice-grid,
+  .choice-grid--three {
+    grid-template-columns: 1fr;
   }
 
   .search-hero {
