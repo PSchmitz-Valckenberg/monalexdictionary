@@ -1,0 +1,16 @@
+{
+  "name": "Monalex Dictionary",
+  "short_name": "Monalex",
+  "description": "French-Monegasque dictionary with conjugation pages and optional AI study cards.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#c8102e",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    }
+  ]
+}

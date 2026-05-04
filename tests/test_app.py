@@ -240,6 +240,8 @@ class MonalexAppTests(unittest.TestCase):
         self.assertIn("<meta name=\"description\"", html)
         self.assertIn("og:title", html)
         self.assertIn("twitter:card", html)
+        self.assertIn("favicon.svg", html)
+        self.assertIn("site.webmanifest", html)
 
     def test_navigation_marks_current_page(self):
         response = self.client.get("/search")

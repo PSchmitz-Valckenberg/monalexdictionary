@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Monalex">
+  <rect width="64" height="64" rx="12" fill="#c8102e"/>
+  <rect x="8" y="8" width="48" height="48" rx="8" fill="#ffffff"/>
+  <path d="M16 47V17h8l8 13 8-13h8v30h-8V30L34 41h-4L24 30v17z" fill="#182128"/>
+</svg>

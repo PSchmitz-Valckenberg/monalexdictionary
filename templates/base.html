@@ -12,6 +12,8 @@
     <meta property="og:url" content="{{ site_url or request.url }}">
     <meta name="twitter:card" content="summary">
     <title>{% block title %}Monalex{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block head %}{% endblock %}
 </head>
