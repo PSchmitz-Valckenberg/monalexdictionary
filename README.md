@@ -87,6 +87,7 @@ values as environment variables.
 | `ENABLE_SQLITE_FALLBACK` | `1` | Enables local SQLite fallback when MySQL is unavailable. |
 | `SQLITE_FALLBACK_PATH` | `instance/monalex_dictionary.sqlite3` | Generated SQLite cache path. |
 | `APP_VERSION` | `0.2.0` | Version returned by `/healthz`. |
+| `SITE_URL` | empty | Canonical public URL used by sitemap and social metadata. |
 | `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
 | `OPENAI_MODEL` | `gpt-5.4-mini` | Model used by the AI helper. |
 | `AI_INPUT_LIMIT` | `1200` | Per-field character limit before sending dictionary text to the AI model. |
@@ -133,6 +134,8 @@ deployment checklist.
 | `/conjugaison/deuxieme` | HTML | Clean URL for second-group verb endings. |
 | `/conjugaison/troisieme` | HTML | Clean URL for third-group verb endings. |
 | `/healthz` | JSON | Service metadata and health response. |
+| `/robots.txt` | Text | Search crawler policy and sitemap link. |
+| `/sitemap.xml` | XML | Public page sitemap. |
 
 See [docs/API.md](docs/API.md) for response examples.
 

@@ -3,7 +3,7 @@ import os
 import sqlite3
 from urllib.parse import urlparse
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request, url_for
 import mysql.connector
 from dotenv import load_dotenv
 
@@ -13,8 +13,25 @@ load_dotenv()
 
 APP_NAME = "Monalex Dictionary"
 APP_VERSION = os.environ.get("APP_VERSION", "0.2.0")
+SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
+DEFAULT_META_DESCRIPTION = (
+    "Monalex is a French-Monégasque dictionary with searchable vocabulary, "
+    "conjugation pages, a JSON API, and optional AI study cards."
+)
 DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+PUBLIC_ENDPOINTS = (
+    "home",
+    "search",
+    "conjugaison",
+    "premier",
+    "deuxieme",
+    "troisieme",
+    "etre_conjugation",
+    "avoir_conjugation",
+    "exceptions_premier",
+    "exceptions_deuxieme",
+)
 
 AI_EXPLANATION_SCHEMA = {
     "type": "object",
@@ -129,6 +146,22 @@ SQLITE_FALLBACK_PATH = os.environ.get(
     os.path.join(app.instance_path, "monalex_dictionary.sqlite3"),
 )
 validate_mysql_table_name(MYSQL_TABLE)
+
+
+def public_url_for(endpoint):
+    path = url_for(endpoint)
+    if SITE_URL:
+        return f"{SITE_URL}{path}"
+    return f"{request.url_root.rstrip('/')}{path}"
+
+
+@app.context_processor
+def inject_site_metadata():
+    return {
+        "app_name": APP_NAME,
+        "default_meta_description": DEFAULT_META_DESCRIPTION,
+        "site_url": SITE_URL,
+    }
 
 
 @app.route("/exceptions_premier.html")
@@ -462,6 +495,28 @@ def healthz():
             },
         }
     )
+
+
+@app.route("/robots.txt", methods=["GET"])
+def robots_txt():
+    sitemap_url = public_url_for("sitemap_xml")
+    body = f"User-agent: *\nAllow: /\nSitemap: {sitemap_url}\n"
+    return Response(body, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml():
+    urls = "\n".join(
+        f"  <url><loc>{public_url_for(endpoint)}</loc></url>"
+        for endpoint in PUBLIC_ENDPOINTS
+    )
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}\n"
+        "</urlset>\n"
+    )
+    return Response(body, mimetype="application/xml")
 
 
 @app.after_request

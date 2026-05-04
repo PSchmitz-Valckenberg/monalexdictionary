@@ -141,3 +141,12 @@ Example response:
   }
 }
 ```
+
+## Discovery
+
+The app also exposes standard crawler discovery files:
+
+| Route | Description |
+|-------|-------------|
+| `/robots.txt` | Allows public crawling and references the sitemap. |
+| `/sitemap.xml` | Lists the main public HTML pages. |

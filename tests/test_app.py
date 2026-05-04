@@ -214,6 +214,32 @@ class MonalexAppTests(unittest.TestCase):
         self.assertIn("configured", payload["ai"])
         self.assertIn("model", payload["ai"])
 
+    def test_home_page_includes_seo_metadata(self):
+        response = self.client.get("/")
+        html = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("<meta name=\"description\"", html)
+        self.assertIn("og:title", html)
+        self.assertIn("twitter:card", html)
+
+    def test_robots_txt_references_sitemap(self):
+        response = self.client.get("/robots.txt")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "text/plain")
+        self.assertIn("Sitemap:", response.get_data(as_text=True))
+
+    def test_sitemap_lists_public_pages(self):
+        response = self.client.get("/sitemap.xml")
+        xml = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.mimetype, "application/xml")
+        self.assertIn("<loc>http://localhost/</loc>", xml)
+        self.assertIn("<loc>http://localhost/search</loc>", xml)
+        self.assertIn("<loc>http://localhost/conjugaison</loc>", xml)
+
     def test_url_generation_prefers_clean_routes(self):
         with app_module.app.test_request_context():
             self.assertEqual(url_for("premier"), "/conjugaison/premier")

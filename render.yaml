@@ -11,6 +11,8 @@ services:
         value: "3.11.5"
       - key: APP_VERSION
         value: "0.2.0"
+      - key: SITE_URL
+        value: ""
       - key: SEARCH_LIMIT
         value: "50"
       - key: ENABLE_SQLITE_FALLBACK
