@@ -49,3 +49,12 @@ flask --app app run
 The dictionary search uses the `dictionary` table from `dictionary.sql` by
 default. Override `MYSQL_TABLE` in `.env` only if you import the data under a
 different table name.
+
+## Tests
+
+```bash
+python -m unittest discover
+```
+
+The test suite uses mocked database connections, so it can run without a local
+MySQL server.

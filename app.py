@@ -10,6 +10,15 @@ app = Flask(__name__, template_folder='templates')
 load_dotenv()
 
 
+def get_positive_int(name, default, maximum=None):
+    value = int(os.environ.get(name, default))
+    if value < 1:
+        raise ValueError(f"{name} must be at least 1.")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{name} must be at most {maximum}.")
+    return value
+
+
 def get_mysql_config():
     mysql_url = os.environ.get("JAWSDB_URL")
     if mysql_url:
@@ -33,6 +42,7 @@ def get_mysql_config():
 
 MYSQL_CONFIG = get_mysql_config()
 MYSQL_TABLE = os.environ.get("MYSQL_TABLE", "dictionary")
+SEARCH_LIMIT = get_positive_int("SEARCH_LIMIT", 50, maximum=200)
 
 if not MYSQL_TABLE.replace("_", "").isalnum():
     raise ValueError("MYSQL_TABLE must contain only letters, numbers, and underscores.")
@@ -108,7 +118,7 @@ def search():
             f"SELECT word, definition FROM `{MYSQL_TABLE}` "
             "WHERE word LIKE %s OR definition LIKE %s "
             "ORDER BY word "
-            "LIMIT 50"
+            f"LIMIT {SEARCH_LIMIT}"
         )
         cursor.execute(sql_query, (search_term, search_term))
         results = cursor.fetchall()
@@ -143,7 +153,6 @@ if __name__ == "__main__":
     # Use the PORT environment variable if available (for Heroku)
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
 
 
 
