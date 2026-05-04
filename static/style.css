@@ -8,6 +8,7 @@ body {
   background-position: center top;
   margin: 0;
   padding: 0;
+  min-height: 100vh;
 }
 
 
@@ -36,8 +37,10 @@ button {
   background-color: #dc143c;
   color: #fff;
   text-decoration: none;
+  border: 0;
   border-radius: 4px;
   transition: background-color 0.3s ease;
+  cursor: pointer;
 }
 
 button:hover {
@@ -52,6 +55,7 @@ header h1 {
 nav {
   background-color: #f8f8f8;
   padding: 10px;
+  margin-top: 16px;
 }
 
 nav ul {
@@ -71,6 +75,11 @@ nav ul li a {
   padding: 5px;
 }
 
+nav ul li a:hover,
+nav ul li a:focus {
+  color: #dc143c;
+}
+
 main {
   padding: 20px;
   animation: fadeIn 1s ease-in-out;
@@ -85,9 +94,7 @@ footer {
   color: #fff;
   padding: 20px;
   text-align: left;
-  position: fixed;
-  bottom: 0;
-  left: 0;
+  box-sizing: border-box;
   width: 100%;
 }
 
@@ -151,5 +158,85 @@ body::after {
 
 /* Hover effect for the buttons */
 .monaco-button:hover {
-    background-color: #dc143c;
+    background-color: #990000;
+}
+
+.button-group,
+.verb-selection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.verb-selection p {
+  flex-basis: 100%;
+  margin: 18px 0 0;
+}
+
+.content-image {
+  display: block;
+  width: min(700px, 100%);
+  height: auto;
+  margin: 16px 0 24px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+
+.search-input {
+  flex: 1 1 260px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.search-results {
+  max-width: 760px;
+}
+
+.results-list {
+  margin: 0;
+}
+
+.results-list dt {
+  margin-top: 14px;
+  font-weight: bold;
+}
+
+.results-list dd {
+  margin: 4px 0 0;
+}
+
+.error-message {
+  color: #990000;
+  font-weight: bold;
+}
+
+@media (max-width: 640px) {
+  header {
+    padding: 16px;
+  }
+
+  header h1 {
+    font-size: 22px;
+  }
+
+  nav ul li {
+    display: block;
+    margin: 8px 0;
+  }
+
+  .search-form button,
+  .search-input,
+  .monaco-button {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }

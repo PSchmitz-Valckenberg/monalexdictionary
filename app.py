@@ -1,23 +1,41 @@
 import os
+from urllib.parse import urlparse
+
 from flask import Flask, render_template, request
 import mysql.connector
-import logging
-from dotenv import load_dotenv  # Import the function
+from dotenv import load_dotenv
 
 
 app = Flask(__name__, template_folder='templates')
 load_dotenv()
 
 
-mysql_host = os.environ.get("MYSQL_HOST","localhost")
-mysql_user = os.environ.get("MYSQL_USER", "root")
-mysql_password = os.environ.get("MYSQL_PASSWORD", "Benamira05")
-mysql_database = os.environ.get("MYSQL_DATABASE", "mydictionary")
+def get_mysql_config():
+    mysql_url = os.environ.get("JAWSDB_URL")
+    if mysql_url:
+        parsed_url = urlparse(mysql_url)
+        return {
+            "host": parsed_url.hostname,
+            "port": parsed_url.port or 3306,
+            "user": parsed_url.username,
+            "password": parsed_url.password,
+            "database": parsed_url.path.lstrip("/"),
+        }
 
-print("MySQL Host:")
+    return {
+        "host": os.environ.get("MYSQL_HOST", "localhost"),
+        "port": int(os.environ.get("MYSQL_PORT", 3306)),
+        "user": os.environ.get("MYSQL_USER", "root"),
+        "password": os.environ.get("MYSQL_PASSWORD", ""),
+        "database": os.environ.get("MYSQL_DATABASE", "dictionary"),
+    }
 
-# JawsDB MySQL configuration
-mysql_url = os.environ.get("JAWSDB_URL")
+
+MYSQL_CONFIG = get_mysql_config()
+MYSQL_TABLE = os.environ.get("MYSQL_TABLE", "dictionary")
+
+if not MYSQL_TABLE.replace("_", "").isalnum():
+    raise ValueError("MYSQL_TABLE must contain only letters, numbers, and underscores.")
 
 @app.route('/exceptions_premier.html', )
 def exceptions_premier():
@@ -56,44 +74,68 @@ def home():
 
 @app.route('/conjugaison', methods=['GET'])
 def conjugaison():
-    # Your view logic for the "conjugaison" endpoint
     return render_template('conjugaison.html')
 
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(
-            host=mysql_host,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-        return connection
+        return mysql.connector.connect(**MYSQL_CONFIG)
     except mysql.connector.Error as e:
         app.logger.error(f"Error connecting to the database: {e}")
         return None
 
-# Your routes and views go here...
-
 @app.route('/search', methods=['GET'])
 def search():
-    word = request.args.get('searchInput')
+    query = request.args.get('searchInput', '').strip()
+
+    if not query:
+        return render_template('search.html', query=query, results=[], searched=False)
 
     connection = get_db_connection()
     if connection is None:
-        # Handle the error here
-        return "Error connecting to the database"
+        return render_template(
+            'search.html',
+            query=query,
+            results=[],
+            searched=True,
+            error_message="Connexion à la base de données impossible.",
+        ), 503
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
 
-    sql_query = "SELECT french_word FROM dictionary_real WHERE french_word LIKE %s"
-    search_term = f"%{word}%"  # Define the search_term here
-    cursor.execute(sql_query, (search_term,))
-    results = cursor.fetchall()
+    try:
+        search_term = f"%{query}%"
+        sql_query = (
+            f"SELECT word, definition FROM `{MYSQL_TABLE}` "
+            "WHERE word LIKE %s OR definition LIKE %s "
+            "ORDER BY word "
+            "LIMIT 50"
+        )
+        cursor.execute(sql_query, (search_term, search_term))
+        results = cursor.fetchall()
+    except mysql.connector.Error as e:
+        app.logger.error(f"Error running search query: {e}")
+        return render_template(
+            'search.html',
+            query=query,
+            results=[],
+            searched=True,
+            error_message="La recherche a échoué.",
+        ), 500
+    finally:
+        cursor.close()
+        connection.close()
 
-    cursor.close()
-    connection.close()
+    return render_template('search.html', query=query, results=results, searched=True)
 
-    return render_template('search.html', results=results)
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html', error_message="Page introuvable."), 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return render_template('error.html', error_message="Erreur interne du serveur."), 500
 
 
 
@@ -101,8 +143,6 @@ if __name__ == "__main__":
     # Use the PORT environment variable if available (for Heroku)
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-
 
 
 

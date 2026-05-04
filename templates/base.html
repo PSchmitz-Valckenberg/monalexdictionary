@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Monalex</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% block head %}{% endblock %}
 </head>
 <body>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
     <header>
-        <h1>Bienvenue à Monalex: le dictionaire monegasque, u diçiunari munegascu</h1>
-        <nav>
+        <h1>Bienvenue à Monalex : le dictionnaire monégasque, u diçiunari munegascu</h1>
+        <nav aria-label="Navigation principale">
             <ul>
                 <li><a href="{{ url_for('home') }}">Accueil</a></li>
                 <li><a href="{{ url_for('search') }}">Recherche</a></li>

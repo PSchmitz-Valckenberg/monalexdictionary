@@ -29,3 +29,23 @@ Monalex is a linguistic microproject designed to preserve and promote the Monég
 
 ---
 
+## Local Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Import the database dump into MySQL, then adjust `.env` if your local database
+name or credentials differ:
+
+```bash
+mysql -u root -p dictionary < dictionary.sql
+flask --app app run
+```
+
+The dictionary search uses the `dictionary` table from `dictionary.sql` by
+default. Override `MYSQL_TABLE` in `.env` only if you import the data under a
+different table name.
