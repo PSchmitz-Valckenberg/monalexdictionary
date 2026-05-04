@@ -1,48 +1,71 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2 class="title">Recherche</h2>
-    <p class="description">Cherchez un mot français ou monégasque dans le dictionnaire.</p>
+    <section class="search-hero">
+        <div>
+            <p class="eyebrow">Dictionnaire</p>
+            <h2 class="title">Recherche</h2>
+            <p class="description">Cherchez un mot français ou monégasque dans le dictionnaire.</p>
+        </div>
+        <div class="search-status">
+            <span class="status-dot"></span>
+            <span>Recherche locale prête</span>
+        </div>
+    </section>
 
-    <h2 class="section-title">Rechercher des mots</h2>
+    <section class="search-panel" aria-labelledby="search-title">
+        <h3 id="search-title" class="section-title">Rechercher des mots</h3>
+        <form id="searchForm" class="search-form" action="{{ url_for('search') }}" method="get">
+            <label class="search-label" for="searchInput">Mot ou traduction</label>
+            <div class="search-control">
+                <input
+                    type="search"
+                    id="searchInput"
+                    name="searchInput"
+                    placeholder="ex. accueillir, bonjour, Monaco"
+                    class="search-input"
+                    value="{{ query or '' }}"
+                    autocomplete="off"
+                >
+                <button type="submit" class="search-button">Rechercher</button>
+            </div>
+        </form>
+    </section>
 
-    <form id="searchForm" class="search-form" action="{{ url_for('search') }}" method="get">
-        <input
-            type="search"
-            id="searchInput"
-            name="searchInput"
-            placeholder="Entrez un mot"
-            class="search-input"
-            value="{{ query or '' }}"
-            autocomplete="off"
-        >
-        <button type="submit" class="search-button">Rechercher</button>
-    </form>
-
-    <div id="searchResults" class="search-results" >
+    <section id="searchResults" class="search-results" aria-live="polite">
         {% if error_message %}
             <p class="error-message">{{ error_message }}</p>
         {% elif results %}
-            <h3 class="results-title">Résultats :</h3>
+            <div class="results-heading">
+                <h3 class="results-title">Résultats</h3>
+                <span>{{ results|length }} affiché{% if results|length > 1 %}s{% endif %}</span>
+            </div>
             <dl class="results-list">
                 {% for result in results %}
                     <div class="result-item">
-                        <dt>{{ result.word }}</dt>
-                        <dd>{{ result.definition }}</dd>
-                        <button
-                            type="button"
-                            class="ai-explain-button"
-                            data-word="{{ result.word }}"
-                            data-definition="{{ result.definition }}"
-                        >
-                            Assistant IA
-                        </button>
+                        <div class="result-copy">
+                            <dt>{{ result.word }}</dt>
+                            <dd>{{ result.definition }}</dd>
+                        </div>
+                        <div class="result-actions">
+                            <button
+                                type="button"
+                                class="ai-explain-button"
+                                data-word="{{ result.word }}"
+                                data-definition="{{ result.definition }}"
+                            >
+                                Assistant IA
+                            </button>
+                        </div>
                         <div class="ai-explanation" aria-live="polite" hidden></div>
                     </div>
                 {% endfor %}
             </dl>
         {% elif searched %}
-            <p class="no-results">Aucun résultat trouvé.</p>
+            <div class="empty-state">
+                <h3>Aucun résultat trouvé</h3>
+                <p>Essayez une autre orthographe ou un fragment du mot.</p>
+            </div>
         {% endif %}
-    </div>
+    </section>
 {% endblock %}
