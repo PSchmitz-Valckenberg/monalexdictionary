@@ -1,4 +1,5 @@
 import unittest
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from flask import url_for
@@ -202,6 +203,21 @@ class MonalexAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["results"], fallback_results)
 
+    def test_sqlite_fallback_rebuilds_cache_from_dump(self):
+        with TemporaryDirectory() as temp_dir:
+            db_path = f"{temp_dir}/dictionary.sqlite3"
+            with patch.object(app_module, "SQLITE_FALLBACK_PATH", db_path), patch.object(
+                app_module,
+                "ENABLE_SQLITE_FALLBACK",
+                True,
+            ):
+                results = app_module.search_sqlite_fallback_entries("apple")
+                status = app_module.get_sqlite_fallback_status()
+
+        self.assertEqual(results[0]["word"], "apple")
+        self.assertTrue(status["ready"])
+        self.assertGreater(status["rows"], 1000)
+
     def test_health_endpoint_returns_service_metadata(self):
         response = self.client.get("/healthz")
 
@@ -213,6 +229,8 @@ class MonalexAppTests(unittest.TestCase):
         self.assertIn("ai", payload)
         self.assertIn("configured", payload["ai"])
         self.assertIn("model", payload["ai"])
+        self.assertIn("dictionary_cache", payload)
+        self.assertIn("enabled", payload["dictionary_cache"])
 
     def test_home_page_includes_seo_metadata(self):
         response = self.client.get("/")

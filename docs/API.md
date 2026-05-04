@@ -138,6 +138,12 @@ Example response:
   "ai": {
     "configured": false,
     "model": "gpt-5.4-mini"
+  },
+  "dictionary_cache": {
+    "enabled": true,
+    "path": "/tmp/monalex_dictionary.sqlite3",
+    "ready": true,
+    "rows": 14200
   }
 }
 ```

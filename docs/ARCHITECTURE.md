@@ -73,6 +73,8 @@ the same values as environment variables.
 - Database failures return user-facing error states instead of raw tracebacks.
 - Local search can continue from the generated SQLite cache when MySQL is not
   running.
+- The SQLite cache stores source metadata and rebuilds automatically when
+  `dictionary.sql` changes.
 - `/healthz` is independent from MySQL so platform health checks do not fail
   during transient database maintenance.
 - The AI helper is isolated behind its own endpoint and does not affect normal

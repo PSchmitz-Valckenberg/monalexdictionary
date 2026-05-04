@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+import time
 from urllib.parse import urlparse
 
 from flask import Flask, Response, jsonify, render_template, request, url_for
@@ -301,6 +302,61 @@ def iter_dictionary_dump_entries(sql_path="dictionary.sql"):
                             yield int(row[0]), row[1], row[2]
 
 
+def get_dictionary_dump_signature(sql_path="dictionary.sql"):
+    stat = os.stat(sql_path)
+    return f"{stat.st_mtime_ns}:{stat.st_size}"
+
+
+def rebuild_sqlite_fallback_database(connection, sql_path="dictionary.sql"):
+    started_at = time.monotonic()
+    connection.executescript(
+        """
+        DROP TABLE IF EXISTS dictionary;
+        DROP TABLE IF EXISTS cache_metadata;
+        CREATE TABLE dictionary (
+            id INTEGER PRIMARY KEY,
+            word TEXT,
+            definition TEXT
+        );
+        CREATE TABLE cache_metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+        """
+    )
+    connection.executemany(
+        "INSERT INTO dictionary (id, word, definition) VALUES (?, ?, ?)",
+        iter_dictionary_dump_entries(sql_path),
+    )
+    connection.execute("CREATE INDEX idx_dictionary_word ON dictionary(word)")
+    connection.execute("CREATE INDEX idx_dictionary_definition ON dictionary(definition)")
+    row_count = connection.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+    metadata = {
+        "source_signature": get_dictionary_dump_signature(sql_path),
+        "row_count": str(row_count),
+        "rebuilt_at_unix": str(int(time.time())),
+        "build_seconds": f"{time.monotonic() - started_at:.3f}",
+    }
+    connection.executemany(
+        "INSERT INTO cache_metadata (key, value) VALUES (?, ?)",
+        metadata.items(),
+    )
+    connection.commit()
+    app.logger.info(f"SQLite fallback cache ready with {row_count} entries.")
+
+
+def sqlite_cache_is_current(connection, sql_path="dictionary.sql"):
+    try:
+        signature = connection.execute(
+            "SELECT value FROM cache_metadata WHERE key = 'source_signature'"
+        ).fetchone()
+        row_count = connection.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+    except sqlite3.Error:
+        return False
+
+    return bool(signature and signature[0] == get_dictionary_dump_signature(sql_path) and row_count > 0)
+
+
 def ensure_sqlite_fallback_database():
     if not ENABLE_SQLITE_FALLBACK:
         return None
@@ -310,29 +366,38 @@ def ensure_sqlite_fallback_database():
 
     connection = sqlite3.connect(db_path)
     connection.row_factory = sqlite3.Row
-    has_rows = connection.execute(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'dictionary'"
-    ).fetchone()
+    connection.execute("PRAGMA journal_mode=WAL")
 
-    if has_rows:
-        return connection
+    if not sqlite_cache_is_current(connection):
+        rebuild_sqlite_fallback_database(connection)
 
-    connection.execute(
-        """
-        CREATE TABLE dictionary (
-            id INTEGER PRIMARY KEY,
-            word TEXT,
-            definition TEXT
-        )
-        """
-    )
-    connection.executemany(
-        "INSERT INTO dictionary (id, word, definition) VALUES (?, ?, ?)",
-        iter_dictionary_dump_entries(),
-    )
-    connection.execute("CREATE INDEX idx_dictionary_word ON dictionary(word)")
-    connection.commit()
     return connection
+
+
+def get_sqlite_fallback_status():
+    if not ENABLE_SQLITE_FALLBACK:
+        return {"enabled": False}
+
+    db_path = os.path.abspath(SQLITE_FALLBACK_PATH)
+    status = {
+        "enabled": True,
+        "path": db_path,
+        "ready": False,
+    }
+
+    if not os.path.exists(db_path):
+        return status
+
+    connection = sqlite3.connect(db_path)
+    try:
+        row_count = connection.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+        status.update({"ready": row_count > 0, "rows": row_count})
+    except sqlite3.Error:
+        status.update({"ready": False})
+    finally:
+        connection.close()
+
+    return status
 
 
 def search_sqlite_fallback_entries(query):
@@ -493,6 +558,7 @@ def healthz():
                 "configured": is_ai_configured(),
                 "model": OPENAI_MODEL,
             },
+            "dictionary_cache": get_sqlite_fallback_status(),
         }
     )
 
