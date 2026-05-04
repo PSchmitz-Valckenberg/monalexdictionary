@@ -36,9 +36,12 @@ suite that runs without a local database.
 ├── tests/                    # Unit and smoke tests
 ├── docs/
 │   ├── API.md                # Endpoint reference
-│   └── ARCHITECTURE.md       # Runtime and configuration notes
+│   ├── ARCHITECTURE.md       # Runtime and configuration notes
+│   └── DEPLOYMENT.md         # Production hosting guide
 ├── .github/workflows/ci.yml  # GitHub Actions test workflow
 ├── Makefile                  # Common developer commands
+├── render.yaml               # Render deployment blueprint
+├── Procfile                  # Generic process declaration
 └── requirements.txt          # Runtime dependencies
 ```
 
@@ -93,10 +96,29 @@ values as environment variables.
 ```bash
 make install  # install runtime dependencies
 make run      # start Flask on PORT=5000 by default
+make prod     # start Gunicorn for production-like local testing
 make test     # run the unittest suite
 make check    # compile Python files and run tests
 make clean    # remove local Python cache files
 ```
+
+## Deployment
+
+The repository includes production-ready Gunicorn and Render configuration:
+
+```bash
+gunicorn app:app
+```
+
+For Render, use the included `render.yaml` blueprint or configure:
+
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn app:app`
+- Health Check Path: `/healthz`
+
+Set `OPENAI_API_KEY` as a secret environment variable to enable the AI study
+helper in production. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full
+deployment checklist.
 
 ## HTTP Surface
 

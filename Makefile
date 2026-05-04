@@ -1,13 +1,16 @@
 PYTHON ?= python3
 PORT ?= 5000
 
-.PHONY: install run test check clean
+.PHONY: install run prod test check clean
 
 install:
 	$(PYTHON) -m pip install -r requirements.txt
 
 run:
 	flask --app app run --port $(PORT)
+
+prod:
+	gunicorn app:app
 
 test:
 	PYTHONDONTWRITEBYTECODE=1 $(PYTHON) -m unittest discover

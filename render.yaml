@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: monalexdictionary
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.5"
+      - key: APP_VERSION
+        value: "0.2.0"
+      - key: SEARCH_LIMIT
+        value: "50"
+      - key: ENABLE_SQLITE_FALLBACK
+        value: "1"
+      - key: SQLITE_FALLBACK_PATH
+        value: /tmp/monalex_dictionary.sqlite3
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
+      - key: AI_INPUT_LIMIT
+        value: "1200"
+      - key: OPENAI_API_KEY
+        sync: false

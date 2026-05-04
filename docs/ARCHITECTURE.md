@@ -13,6 +13,8 @@ the JSON API.
 | `static/` | CSS, small browser script, and historical/conjugation image assets. |
 | `dictionary.sql` | MySQL dump used to bootstrap the dictionary table locally. |
 | `tests/` | Standard-library `unittest` suite with mocked database connections. |
+| `gunicorn.conf.py` | Production server defaults for Gunicorn. |
+| `render.yaml` | Render deployment blueprint. |
 
 ## Request Flow
 
@@ -61,6 +63,9 @@ the same values as environment variables.
 | `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
 | `OPENAI_MODEL` | `gpt-5.4-mini` | Model used for AI explanations. |
 | `AI_INPUT_LIMIT` | `1200` | Per-field character limit for AI explanation input. |
+| `PORT` | `8000` in Gunicorn config | HTTP bind port for production servers. |
+| `WEB_CONCURRENCY` | `2` | Gunicorn worker count. |
+| `GUNICORN_THREADS` | `4` | Gunicorn threads per worker. |
 
 ## Reliability Notes
 
