@@ -19,9 +19,9 @@ services:
         value: "1"
       - key: SQLITE_FALLBACK_PATH
         value: /tmp/monalex_dictionary.sqlite3
-      - key: OPENAI_MODEL
-        value: gpt-5.4-mini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash-lite
       - key: AI_INPUT_LIMIT
         value: "1200"
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
