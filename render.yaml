@@ -12,7 +12,7 @@ services:
       - key: APP_VERSION
         value: "0.2.0"
       - key: SITE_URL
-        value: ""
+        value: "https://monalexdictionary.onrender.com"
       - key: SEARCH_LIMIT
         value: "50"
       - key: ENABLE_SQLITE_FALLBACK
