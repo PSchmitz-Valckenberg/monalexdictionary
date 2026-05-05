@@ -17,10 +17,10 @@ APP_VERSION = os.environ.get("APP_VERSION", "0.2.0")
 SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")
 DEFAULT_META_DESCRIPTION = (
     "Monalex is a French-Monégasque dictionary with searchable vocabulary, "
-    "conjugation pages, a JSON API, and optional AI study cards."
+    "conjugation pages, a JSON API, and additional AI study cards."
 )
-DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", DEFAULT_GEMINI_MODEL)
 PUBLIC_ENDPOINTS = (
     "home",
     "search",
@@ -55,7 +55,6 @@ AI_EXPLANATION_SCHEMA = {
                     "monegasque": {"type": "string"},
                 },
                 "required": ["fr", "monegasque"],
-                "additionalProperties": False,
             },
             "description": "Two short French/Monégasque example pairs.",
         },
@@ -75,16 +74,6 @@ AI_EXPLANATION_SCHEMA = {
         "memory_tip",
         "practice_question",
     ],
-    "additionalProperties": False,
-}
-
-AI_RESPONSE_FORMAT = {
-    "format": {
-        "type": "json_schema",
-        "name": "monalex_ai_explanation",
-        "strict": True,
-        "schema": AI_EXPLANATION_SCHEMA,
-    }
 }
 
 AI_INSTRUCTIONS = (
@@ -451,7 +440,7 @@ def search_dictionary_entries(query):
 
 
 def is_ai_configured():
-    return bool(os.environ.get("OPENAI_API_KEY"))
+    return bool(os.environ.get("GEMINI_API_KEY"))
 
 
 def clean_ai_input(value):
@@ -460,35 +449,36 @@ def clean_ai_input(value):
 
 def generate_ai_explanation(word, definition):
     if not is_ai_configured():
-        return None, "Assistant IA non configuré. Définissez OPENAI_API_KEY pour l'activer.", 503
+        return None, "Assistant IA non configuré. Définissez GEMINI_API_KEY pour l'activer.", 503
 
     try:
-        from openai import OpenAI, OpenAIError
+        from google import genai
+        from google.genai import types
     except ImportError:
-        return None, "SDK OpenAI absent. Lancez pip install -r requirements.txt.", 500
+        return None, "SDK Gemini absent. Lancez pip install -r requirements.txt.", 500
 
     prompt = (
+        f"{AI_INSTRUCTIONS}\n\n"
         "Explique cette entrée du dictionnaire pour un apprenant.\n\n"
         f"Mot français: {clean_ai_input(word)}\n"
         f"Traduction / définition monégasque: {clean_ai_input(definition)}"
     )
 
     try:
-        client = OpenAI()
-        response = client.responses.create(
-            model=OPENAI_MODEL,
-            instructions=AI_INSTRUCTIONS,
-            input=prompt,
-            text=AI_RESPONSE_FORMAT,
-            max_output_tokens=900,
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=AI_EXPLANATION_SCHEMA,
+                max_output_tokens=900,
+            ),
         )
-        return json.loads(response.output_text), None, 200
-    except OpenAIError as e:
-        app.logger.error(f"OpenAI request failed: {e}")
+        return json.loads(response.text), None, 200
+    except Exception as e:
+        app.logger.error(f"Gemini request failed: {e}")
         return None, "La requête vers l'assistant IA a échoué.", 502
-    except (json.JSONDecodeError, AttributeError) as e:
-        app.logger.error(f"Invalid AI helper response: {e}")
-        return None, "L'assistant IA a renvoyé une réponse invalide.", 502
 
 
 @app.route("/search", methods=["GET"])
@@ -528,7 +518,7 @@ def api_ai_explain():
         {
             "word": word,
             "definition": definition,
-            "model": OPENAI_MODEL,
+            "model": GEMINI_MODEL,
             "explanation": explanation,
         }
     )
@@ -557,7 +547,7 @@ def healthz():
             "version": APP_VERSION,
             "ai": {
                 "configured": is_ai_configured(),
-                "model": OPENAI_MODEL,
+                "model": GEMINI_MODEL,
             },
             "dictionary_cache": get_sqlite_fallback_status(),
         }
