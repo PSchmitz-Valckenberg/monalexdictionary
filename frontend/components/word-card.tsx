@@ -11,15 +11,19 @@ interface Props {
 export default function WordCard({ word, definition }: Props) {
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
 
   async function handleExplain() {
     setOpen(true);
-    if (explanation) return;
+    if (explanation || loading) return;
     setLoading(true);
+    setError(false);
     try {
       const res = await explainWord(word, definition);
       setExplanation(res.explanation);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -44,6 +48,16 @@ export default function WordCard({ word, definition }: Props) {
         <div className="mt-4 pt-4 border-t border-gray-100">
           {loading ? (
             <p className="text-sm text-gray-400 animate-pulse">Génération en cours…</p>
+          ) : error ? (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-red-500">Erreur lors de la génération.</p>
+              <button
+                onClick={() => { setError(false); handleExplain(); }}
+                className="text-xs text-gray-400 underline hover:text-gray-600"
+              >
+                Réessayer
+              </button>
+            </div>
           ) : explanation ? (
             <div className="space-y-3 text-sm">
               <p className="text-gray-700">{explanation.summary_fr}</p>

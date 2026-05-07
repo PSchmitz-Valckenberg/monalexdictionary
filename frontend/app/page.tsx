@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getWordOfDay, type WordOfDay } from "@/lib/api";
 
 async function WordOfDaySection() {
-  let wotd: WordOfDay | null = null;
+  let wotd: WordOfDay;
   try {
     wotd = await getWordOfDay();
   } catch {
@@ -55,7 +55,7 @@ export default function HomePage() {
           backgroundPosition: "center",
         }}
       >
-        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/30" />
         <div className="relative max-w-3xl mx-auto px-4 py-24">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#ce1126] mb-4">
             Monaco linguistique

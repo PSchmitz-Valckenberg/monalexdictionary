@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { searchDictionary, type SearchResult } from "@/lib/api";
 import WordCard from "@/components/word-card";
 
-function useDebounce<T extends (...args: never[]) => void>(fn: T, delay: number): T {
-  let timer: ReturnType<typeof setTimeout>;
-  return ((...args: Parameters<T>) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  }) as T;
+function useDebouncedCallback(fn: (q: string) => void, delay: number) {
+  const fnRef = useRef(fn);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { fnRef.current = fn; });
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  return useCallback((q: string) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => fnRef.current(q), delay);
+  }, [delay]);
 }
 
 export default function SearchPage() {
@@ -40,7 +45,7 @@ export default function SearchPage() {
     }
   }, []);
 
-  const debouncedSearch = useDebounce(doSearch, 300);
+  const debouncedSearch = useDebouncedCallback(doSearch, 300);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
@@ -62,16 +67,14 @@ export default function SearchPage() {
         <label className="block text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Mot ou traduction
         </label>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={query}
-            onChange={handleChange}
-            placeholder="Ex: bonjour, maison…"
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ce1126]/30 focus:border-[#ce1126]"
-            autoFocus
-          />
-        </div>
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder="Ex: bonjour, maison…"
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#ce1126]/30 focus:border-[#ce1126]"
+          autoFocus
+        />
       </div>
 
       {searched && (
@@ -98,8 +101,8 @@ export default function SearchPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {results.map((r, i) => (
-                <WordCard key={i} word={r.word} definition={r.definition} />
+              {results.map((r) => (
+                <WordCard key={r.word} word={r.word} definition={r.definition} />
               ))}
             </div>
           )}

@@ -49,6 +49,8 @@ export default function Nav() {
           className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
           onClick={() => setOpen(!open)}
           aria-label="Menu"
+          aria-expanded={open}
+          aria-controls="mobile-menu"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {open ? (
@@ -62,7 +64,7 @@ export default function Nav() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden border-t border-gray-100 px-4 py-3 flex flex-col gap-1">
+        <div id="mobile-menu" className="md:hidden border-t border-gray-100 px-4 py-3 flex flex-col gap-1">
           {links.map(({ href, label }) => (
             <Link
               key={href}
