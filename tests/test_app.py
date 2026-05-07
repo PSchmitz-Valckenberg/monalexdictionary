@@ -146,7 +146,7 @@ class MonalexAppTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 503)
-        self.assertIn("OPENAI_API_KEY", response.get_json()["error"])
+        self.assertIn("GEMINI_API_KEY", response.get_json()["error"])
 
     def test_ai_explain_returns_generated_payload(self):
         explanation = {
