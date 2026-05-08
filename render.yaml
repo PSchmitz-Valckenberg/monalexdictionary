@@ -2,26 +2,25 @@ services:
   - type: web
     name: monalexdictionary
     runtime: python
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.5"
       - key: APP_VERSION
-        value: "0.2.0"
+        value: "0.3.0"
       - key: SITE_URL
         value: "https://monalexdictionary.onrender.com"
       - key: SEARCH_LIMIT
         value: "50"
-      - key: ENABLE_SQLITE_FALLBACK
-        value: "1"
-      - key: SQLITE_FALLBACK_PATH
-        value: /tmp/monalex_dictionary.sqlite3
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash-lite
+        value: "gemini-2.5-flash-lite"
       - key: AI_INPUT_LIMIT
         value: "1200"
+      - key: SQLITE_PATH
+        value: "/tmp/monalex.sqlite3"
       - key: GEMINI_API_KEY
         sync: false
