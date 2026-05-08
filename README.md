@@ -1,182 +1,151 @@
-# Monalex Dictionary
+# Monalex
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![Flask](https://img.shields.io/badge/Flask-2.3-black)
-![Database](https://img.shields.io/badge/MySQL-ready-orange)
-![Tests](https://img.shields.io/badge/tests-unittest-green)
+![Backend](https://img.shields.io/badge/Backend-FastAPI-009688)
+![Frontend](https://img.shields.io/badge/Frontend-Next.js_16-black)
+![AI](https://img.shields.io/badge/AI-Gemini_2.5-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![CI](https://github.com/PSchmitz-Valckenberg/monalexdictionary/actions/workflows/ci.yml/badge.svg)
 
-Monalex is a small but production-minded Flask dictionary for French to
-Monégasque vocabulary. It combines a server-rendered learning interface,
-conjugation pages, a MySQL-backed dictionary search, a JSON API, and a test
-suite that runs without a local database.
+**The open-source French–Monégasque dictionary.** 14,200 entries, AI-powered study cards, daily word of the day, and conjugation tables — built to preserve and promote the Monégasque language spoken in Monaco.
 
-## Highlights
+---
 
-- French -> Monégasque dictionary search backed by MySQL.
-- Browser UI built with Flask/Jinja templates and responsive CSS.
-- JSON search API at `/api/search` for future frontend, mobile, or data tools.
-- Optional AI study helper that explains dictionary entries, suggests examples,
-  creates memory tips, and produces practice prompts.
-- Lightweight `/healthz` endpoint for deployment health checks.
-- Environment-based configuration with `.env.example` and `JAWSDB_URL` support.
-- Security headers added on every response.
-- Deterministic `unittest` suite with mocked database connections.
-- CI workflow ready for GitHub Actions.
-- Makefile shortcuts for install, run, test, and cleanup.
-- Repo hygiene for virtualenvs, caches, local credentials, and generated files.
+## Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend API | FastAPI + Python 3.11 |
+| Frontend | Next.js 16, TypeScript, Tailwind CSS |
+| Database | SQLite (built from `dictionary.sql` at startup) |
+| AI | Google Gemini 2.5 Flash Lite via AI Studio |
+| Backend Hosting | Render |
+| Frontend Hosting | Vercel |
+
+---
 
 ## Project Structure
 
-```text
-.
-├── app.py                    # Flask app, routes, config, API, search helper
-├── dictionary.sql            # MySQL bootstrap data
-├── templates/                # Jinja pages
-├── static/                   # CSS, JS, and image assets
-├── tests/                    # Unit and smoke tests
-├── docs/
-│   ├── API.md                # Endpoint reference
-│   ├── ARCHITECTURE.md       # Runtime and configuration notes
-│   └── DEPLOYMENT.md         # Production hosting guide
-├── .github/workflows/ci.yml  # GitHub Actions test workflow
-├── Makefile                  # Common developer commands
-├── render.yaml               # Render deployment blueprint
-├── Procfile                  # Generic process declaration
-└── requirements.txt          # Runtime dependencies
+```
+monalex/
+├── backend/                  # FastAPI API
+│   ├── app/
+│   │   ├── main.py           # App entry point, middleware, lifespan
+│   │   ├── config.py         # Pydantic settings
+│   │   ├── routes/           # search, ai, health endpoints
+│   │   ├── services/         # search logic, Gemini client, AI cache
+│   │   └── database/         # SQLite setup and connection
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/                 # Next.js app
+│   ├── app/                  # App Router pages
+│   ├── components/           # Nav, WordCard
+│   └── lib/api.ts            # Typed API client
+├── dictionary.sql            # 14,200 French–Monégasque entries
+├── data/                     # Future: parallel corpora for model training
+├── docs/                     # API reference, architecture notes
+└── render.yaml               # Render deployment blueprint
 ```
 
-## Quick Start
+---
+
+## Local Development
+
+### Backend
 
 ```bash
-python -m venv .venv
+cd backend
+python3 -m venv .venv
 source .venv/bin/activate
-make install
+pip install -r requirements.txt
 cp .env.example .env
+# Add your GEMINI_API_KEY to .env
+uvicorn app.main:app --reload --port 8000
 ```
 
-Import the database dump into MySQL:
+API runs at `http://localhost:8000`. Auto-generated docs at `http://localhost:8000/docs`.
+
+The SQLite database is built automatically from `dictionary.sql` on first startup. No database setup needed.
+
+### Frontend
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS dictionary CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p dictionary < dictionary.sql
+cd frontend
+npm install
+cp .env.local.example .env.local
+# NEXT_PUBLIC_API_URL=http://localhost:8000 is the default
+npm run dev
 ```
 
-Run the app:
+Frontend runs at `http://localhost:3000`.
 
-```bash
-make run
-```
+---
 
-Open `http://127.0.0.1:5000`.
+## Environment Variables
 
-## Configuration
+### Backend (`backend/.env`)
 
-Local development reads values from `.env`; production can provide the same
-values as environment variables.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GEMINI_API_KEY` | — | Required for AI features. Get one free at [aistudio.google.com](https://aistudio.google.com). |
+| `GEMINI_MODEL` | `gemini-2.5-flash-lite` | Gemini model to use. |
+| `SEARCH_LIMIT` | `50` | Max results per search query (1–200). |
+| `AI_INPUT_LIMIT` | `1200` | Max characters sent per field to the AI. |
+| `SQLITE_PATH` | `/tmp/monalex.sqlite3` | SQLite database path. |
+| `SITE_URL` | — | Canonical public URL for metadata. |
+| `APP_VERSION` | `0.3.0` | Version string returned by `/healthz`. |
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `JAWSDB_URL` | unset | Optional full MySQL URL. Overrides individual MySQL settings. |
-| `MYSQL_HOST` | `localhost` | MySQL host. |
-| `MYSQL_PORT` | `3306` | MySQL port. |
-| `MYSQL_USER` | `root` | MySQL username. |
-| `MYSQL_PASSWORD` | empty | MySQL password. |
-| `MYSQL_DATABASE` | `dictionary` | Database name. |
-| `MYSQL_TABLE` | `dictionary` | Dictionary table name. |
-| `SEARCH_LIMIT` | `50` | Maximum results returned by search. |
-| `ENABLE_SQLITE_FALLBACK` | `1` | Enables local SQLite fallback when MySQL is unavailable. |
-| `SQLITE_FALLBACK_PATH` | `instance/monalex_dictionary.sqlite3` | Generated SQLite cache path. |
-| `APP_VERSION` | `0.2.0` | Version returned by `/healthz`. |
-| `SITE_URL` | empty | Canonical public URL used by sitemap and social metadata. |
-| `OPENAI_API_KEY` | empty | Enables the optional AI study helper. |
-| `OPENAI_MODEL` | `gpt-5.4-mini` | Model used by the AI helper. |
-| `AI_INPUT_LIMIT` | `1200` | Per-field character limit before sending dictionary text to the AI model. |
+### Frontend (`frontend/.env.local`)
 
-## Commands
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend API base URL. |
 
-```bash
-make install  # install runtime dependencies
-make run      # start Flask on PORT=5000 by default
-make prod     # start Gunicorn for production-like local testing
-make test     # run the unittest suite
-make check    # compile Python files and run tests
-make clean    # remove local Python cache files
-```
+---
+
+## API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/search?q=<term>` | Search the dictionary. Returns up to 50 results. |
+| `POST` | `/api/ai/explain` | Generate an AI explanation for a dictionary entry. Body: `{ word, definition }` |
+| `GET` | `/api/ai/word-of-day` | Get today's featured word with AI explanation (cached per day). |
+| `GET` | `/healthz` | Service health check. |
+| `GET` | `/docs` | Interactive API documentation (Swagger UI). |
+
+See [docs/API.md](docs/API.md) for full request/response examples.
+
+---
 
 ## Deployment
 
-The repository includes production-ready Gunicorn and Render configuration:
+### Backend → Render
 
-```bash
-gunicorn app:app
-```
+The `render.yaml` blueprint is included. Connect the repo to Render and it deploys automatically.
 
-For Render, use the included `render.yaml` blueprint or configure:
+Set the following in Render's Environment dashboard:
+- `GEMINI_API_KEY` (secret)
 
-- Build Command: `pip install -r requirements.txt`
-- Start Command: `gunicorn app:app`
-- Health Check Path: `/healthz`
+### Frontend → Vercel
 
-Set `OPENAI_API_KEY` as a secret environment variable to enable the AI study
-helper in production. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full
-deployment checklist.
+1. Import the repo in [vercel.com](https://vercel.com)
+2. Set **Root Directory** to `frontend/`
+3. Add environment variable: `NEXT_PUBLIC_API_URL=https://monalexdictionary.onrender.com`
+4. Deploy
 
-## HTTP Surface
+---
 
-| Route | Format | Description |
-|-------|--------|-------------|
-| `/` | HTML | Landing/history page. |
-| `/search` | HTML | Browser-facing dictionary search. |
-| `/api/search?q=...` | JSON | Programmatic dictionary search. |
-| `/api/ai/explain` | JSON | Optional AI explanation for one dictionary entry. |
-| `/conjugaison` | HTML | Verb group navigation. |
-| `/conjugaison/premier` | HTML | Clean URL for first-group verb endings. |
-| `/conjugaison/deuxieme` | HTML | Clean URL for second-group verb endings. |
-| `/conjugaison/troisieme` | HTML | Clean URL for third-group verb endings. |
-| `/healthz` | JSON | Service metadata and health response. |
-| `/robots.txt` | Text | Search crawler policy and sitemap link. |
-| `/sitemap.xml` | XML | Public page sitemap. |
+## Contributing
 
-See [docs/API.md](docs/API.md) for response examples.
+Contributions are welcome — especially:
+- Additional dictionary entries
+- Monégasque text corpora (for future translation model training)
+- Conjugation table improvements
+- Bug fixes and UI improvements
 
-## Tests
+Please open an issue before starting large changes. All PRs go through CI and Copilot review.
 
-```bash
-make check
-```
+---
 
-The tests mock MySQL, so CI and local development do not require a running
-database just to validate routes, errors, headers, and API responses.
+## License
 
-## Architecture
-
-The app keeps the runtime deliberately compact:
-
-- `search_dictionary_entries()` is the single database-backed search path.
-- `/search` and `/api/search` reuse that path and only differ in response
-  format.
-- `/api/ai/explain` turns one dictionary result into a learner-friendly study
-  card when `OPENAI_API_KEY` is configured.
-- `/healthz` does not query MySQL, so health checks stay fast and stable.
-- Error handlers render friendly pages instead of exposing tracebacks.
-
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
-
-## Data Notes
-
-`dictionary.sql` contains the bootstrap table used by the app. By default,
-Monalex queries:
-
-```sql
-SELECT word, definition FROM dictionary
-WHERE word LIKE ? OR definition LIKE ?
-ORDER BY word
-LIMIT 50;
-```
-
-Set `MYSQL_TABLE` only if you intentionally import the data under another table
-name.
-
-When MySQL is not reachable, Monalex can build a local SQLite cache from
-`dictionary.sql` and keep search working. This is meant for local development,
-demo deployments, and environments where starting MySQL is inconvenient.
+MIT — see [LICENSE](LICENSE).
