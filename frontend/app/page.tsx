@@ -14,18 +14,18 @@ async function WordOfDaySection() {
       <div className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#ce1126]">
         Mot du jour — {wotd.date}
       </div>
-      <div className="border border-gray-200 rounded-2xl p-6 shadow-sm">
-        <p className="text-xl font-bold text-gray-900">{wotd.word}</p>
-        <p className="text-gray-500 mt-1 mb-5">{wotd.definition}</p>
+      <div className="border border-gray-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm bg-white dark:bg-slate-800/50">
+        <p className="text-xl font-bold text-gray-900 dark:text-slate-100">{wotd.word}</p>
+        <p className="text-gray-500 dark:text-slate-400 mt-1 mb-5">{wotd.definition}</p>
 
         <div className="space-y-4 text-sm">
-          <p className="text-gray-700">{wotd.explanation.summary_fr}</p>
+          <p className="text-gray-700 dark:text-slate-300">{wotd.explanation.summary_fr}</p>
 
           {wotd.explanation.examples.length > 0 && (
             <div className="space-y-2">
               {wotd.explanation.examples.map((ex, i) => (
-                <div key={i} className="bg-gray-50 rounded-xl px-4 py-3">
-                  <p className="text-gray-600">{ex.fr}</p>
+                <div key={i} className="bg-gray-50 dark:bg-slate-800 rounded-xl px-4 py-3">
+                  <p className="text-gray-600 dark:text-slate-400">{ex.fr}</p>
                   <p className="text-[#ce1126] font-medium mt-0.5">{ex.monegasque}</p>
                 </div>
               ))}
@@ -33,7 +33,7 @@ async function WordOfDaySection() {
           )}
 
           {wotd.explanation.memory_tip && (
-            <p className="text-amber-700 bg-amber-50 rounded-xl px-4 py-3">
+            <p className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3">
               {wotd.explanation.memory_tip}
             </p>
           )}
@@ -92,11 +92,11 @@ export default function HomePage() {
       <WordOfDaySection />
 
       {/* About */}
-      <section className="max-w-3xl mx-auto px-4 py-12 border-t border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
+      <section className="max-w-3xl mx-auto px-4 py-12 border-t border-gray-100 dark:border-slate-800">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100 mb-6">
           Histoire de la langue
         </h2>
-        <div className="space-y-4 text-sm text-gray-600 leading-relaxed">
+        <div className="space-y-4 text-sm text-gray-600 dark:text-slate-400 leading-relaxed">
           <p>
             Le monégasque (u munegascu) est un dialecte ligure, parlé en
             Principauté de Monaco. Les premières traces écrites apparaissent

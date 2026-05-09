@@ -2,6 +2,8 @@ import os
 import sqlite3
 import time
 
+from filelock import FileLock
+
 from app.config import settings
 
 
@@ -74,53 +76,55 @@ def _iter_entries():
 
 def ensure_db() -> None:
     os.makedirs(os.path.dirname(os.path.abspath(settings.sqlite_path)), exist_ok=True)
-    conn = sqlite3.connect(settings.sqlite_path)
-    try:
-        conn.execute("PRAGMA journal_mode=WAL")
+    lock_path = settings.sqlite_path + ".lock"
+    with FileLock(lock_path, timeout=60):
+        conn = sqlite3.connect(settings.sqlite_path)
         try:
-            sig = conn.execute(
-                "SELECT value FROM cache_metadata WHERE key = 'source_signature'"
-            ).fetchone()
-            count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
-            if sig and sig[0] == _sql_signature() and count > 0:
-                return
-        except sqlite3.Error:
-            pass
+            conn.execute("PRAGMA journal_mode=WAL")
+            try:
+                sig = conn.execute(
+                    "SELECT value FROM cache_metadata WHERE key = 'source_signature'"
+                ).fetchone()
+                count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+                if sig and sig[0] == _sql_signature() and count > 0:
+                    return
+            except sqlite3.Error:
+                pass
 
-        conn.executescript("""
-            DROP TABLE IF EXISTS dictionary;
-            DROP TABLE IF EXISTS cache_metadata;
-            DROP TABLE IF EXISTS ai_response_cache;
-            CREATE TABLE dictionary (
-                id INTEGER PRIMARY KEY,
-                word TEXT,
-                definition TEXT
-            );
-            CREATE TABLE cache_metadata (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            );
-            CREATE TABLE ai_response_cache (
-                cache_key TEXT PRIMARY KEY,
-                response_json TEXT NOT NULL,
-                created_at INTEGER NOT NULL
-            );
-        """)
-        conn.executemany(
-            "INSERT INTO dictionary (id, word, definition) VALUES (?, ?, ?)",
-            _iter_entries(),
-        )
-        conn.execute("CREATE INDEX idx_word ON dictionary(word)")
-        conn.execute("CREATE INDEX idx_def ON dictionary(definition)")
-        count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
-        conn.executemany(
-            "INSERT INTO cache_metadata (key, value) VALUES (?, ?)",
-            {
-                "source_signature": _sql_signature(),
-                "row_count": str(count),
-                "rebuilt_at": str(int(time.time())),
-            }.items(),
-        )
-        conn.commit()
-    finally:
-        conn.close()
+            conn.executescript("""
+                DROP TABLE IF EXISTS dictionary;
+                DROP TABLE IF EXISTS cache_metadata;
+                DROP TABLE IF EXISTS ai_response_cache;
+                CREATE TABLE dictionary (
+                    id INTEGER PRIMARY KEY,
+                    word TEXT,
+                    definition TEXT
+                );
+                CREATE TABLE cache_metadata (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                CREATE TABLE ai_response_cache (
+                    cache_key TEXT PRIMARY KEY,
+                    response_json TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                );
+            """)
+            conn.executemany(
+                "INSERT INTO dictionary (id, word, definition) VALUES (?, ?, ?)",
+                _iter_entries(),
+            )
+            conn.execute("CREATE INDEX idx_word ON dictionary(word)")
+            conn.execute("CREATE INDEX idx_def ON dictionary(definition)")
+            count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+            conn.executemany(
+                "INSERT INTO cache_metadata (key, value) VALUES (?, ?)",
+                {
+                    "source_signature": _sql_signature(),
+                    "row_count": str(count),
+                    "rebuilt_at": str(int(time.time())),
+                }.items(),
+            )
+            conn.commit()
+        finally:
+            conn.close()

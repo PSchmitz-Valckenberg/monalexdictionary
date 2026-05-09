@@ -4,3 +4,4 @@ gunicorn>=21.2.0
 pydantic-settings>=2.5.0
 google-genai>=1.0.0
 python-dotenv>=1.0.0
+filelock>=3.13.0
