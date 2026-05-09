@@ -6,13 +6,17 @@ import { explainWord, type Explanation } from "@/lib/api";
 interface Props {
   word: string;
   definition: string;
+  reversed?: boolean;
 }
 
-export default function WordCard({ word, definition }: Props) {
+export default function WordCard({ word, definition, reversed = false }: Props) {
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const primary = reversed ? definition : word;
+  const secondary = reversed ? word : definition;
 
   async function handleExplain() {
     setOpen(true);
@@ -30,11 +34,11 @@ export default function WordCard({ word, definition }: Props) {
   }
 
   return (
-    <div className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors">
+    <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-gray-300 dark:hover:border-slate-600 transition-colors bg-white dark:bg-slate-800/50">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900">{word}</p>
-          <p className="text-sm text-gray-500 mt-0.5">{definition}</p>
+          <p className="font-semibold text-gray-900 dark:text-slate-100">{primary}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{secondary}</p>
         </div>
         <button
           onClick={handleExplain}
@@ -45,25 +49,25 @@ export default function WordCard({ word, definition }: Props) {
       </div>
 
       {open && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
           {loading ? (
-            <p className="text-sm text-gray-400 animate-pulse">Génération en cours…</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 animate-pulse">Génération en cours…</p>
           ) : error ? (
             <div className="flex items-center gap-3">
               <p className="text-sm text-red-500">Erreur lors de la génération.</p>
               <button
                 onClick={() => { setError(false); handleExplain(); }}
-                className="text-xs text-gray-400 underline hover:text-gray-600"
+                className="text-xs text-gray-400 dark:text-slate-500 underline hover:text-gray-600 dark:hover:text-slate-300"
               >
                 Réessayer
               </button>
             </div>
           ) : explanation ? (
             <div className="space-y-3 text-sm">
-              <p className="text-gray-700">{explanation.summary_fr}</p>
+              <p className="text-gray-700 dark:text-slate-300">{explanation.summary_fr}</p>
 
               {explanation.usage_notes.length > 0 && (
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-slate-400">
                   {explanation.usage_notes.map((note, i) => (
                     <li key={i}>{note}</li>
                   ))}
@@ -73,8 +77,8 @@ export default function WordCard({ word, definition }: Props) {
               {explanation.examples.length > 0 && (
                 <div className="space-y-1.5">
                   {explanation.examples.map((ex, i) => (
-                    <div key={i} className="bg-gray-50 rounded-lg px-3 py-2">
-                      <p className="text-gray-700">{ex.fr}</p>
+                    <div key={i} className="bg-gray-50 dark:bg-slate-800 rounded-lg px-3 py-2">
+                      <p className="text-gray-700 dark:text-slate-300">{ex.fr}</p>
                       <p className="text-[#ce1126] font-medium">{ex.monegasque}</p>
                     </div>
                   ))}
@@ -82,13 +86,13 @@ export default function WordCard({ word, definition }: Props) {
               )}
 
               {explanation.memory_tip && (
-                <p className="text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                <p className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
                   {explanation.memory_tip}
                 </p>
               )}
 
               {explanation.practice_question && (
-                <p className="text-gray-500 italic">{explanation.practice_question}</p>
+                <p className="text-gray-500 dark:text-slate-400 italic">{explanation.practice_question}</p>
               )}
             </div>
           ) : null}

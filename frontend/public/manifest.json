@@ -1,0 +1,40 @@
+{
+  "name": "Monalex — Dictionnaire français-monégasque",
+  "short_name": "Monalex",
+  "description": "Le premier dictionnaire numérique ouvert du monégasque — 14 000 entrées, conjugaisons et assistant IA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ce1126",
+  "lang": "fr",
+  "orientation": "portrait-primary",
+  "categories": ["education", "reference"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Recherche",
+      "short_name": "Recherche",
+      "url": "/search",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Conjugaison",
+      "short_name": "Conjugaison",
+      "url": "/conjugaison",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
