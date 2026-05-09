@@ -21,15 +21,12 @@ async function WordOfDaySection() {
         <div className="space-y-4 text-sm">
           <p className="text-gray-700 dark:text-slate-300">{wotd.explanation.summary_fr}</p>
 
-          {wotd.explanation.examples.length > 0 && (
-            <div className="space-y-2">
-              {wotd.explanation.examples.map((ex, i) => (
-                <div key={i} className="bg-gray-50 dark:bg-slate-800 rounded-xl px-4 py-3">
-                  <p className="text-gray-600 dark:text-slate-400">{ex.fr}</p>
-                  <p className="text-[#ce1126] font-medium mt-0.5">{ex.monegasque}</p>
-                </div>
+          {wotd.explanation.usage_notes?.length > 0 && (
+            <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-slate-400">
+              {wotd.explanation.usage_notes.map((note, i) => (
+                <li key={i}>{note}</li>
               ))}
-            </div>
+            </ul>
           )}
 
           {wotd.explanation.memory_tip && (
