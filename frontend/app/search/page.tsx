@@ -22,7 +22,9 @@ function useDebouncedCallback(fn: (q: string) => void, delay: number) {
 
 function loadHistory(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]");
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((h): h is string => typeof h === "string");
   } catch {
     return [];
   }

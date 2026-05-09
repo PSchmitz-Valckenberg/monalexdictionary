@@ -20,19 +20,25 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const { request } = e;
   if (request.method !== "GET") return;
+
   const url = new URL(request.url);
-  // Never cache API calls — always go to network
+  // Only cache same-origin requests — skip cross-origin (fonts, analytics, etc.)
+  if (url.origin !== self.location.origin) return;
+  // Never cache API calls — always hit the network
   if (url.pathname.startsWith("/api/")) return;
 
   e.respondWith(
-    fetch(request)
-      .then((res) => {
+    fetch(request).then((res) => {
+      // Only cache valid responses
+      if (res.ok) {
         const clone = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, clone));
-        return res;
-      })
-      .catch(() =>
-        caches.match(request).then((r) => r ?? caches.match("/"))
-      )
+        e.waitUntil(
+          caches.open(CACHE).then((c) => c.put(request, clone)).catch(() => {})
+        );
+      }
+      return res;
+    }).catch(() =>
+      caches.match(request).then((r) => r ?? caches.match("/"))
+    )
   );
 });

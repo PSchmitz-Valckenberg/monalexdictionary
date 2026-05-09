@@ -24,6 +24,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Monalex",
   },
+  // TODO: replace with a real 180×180 PNG (SVG is ignored by iOS for home screen icons)
+  icons: { icon: "/icons/icon.svg" },
 };
 
 export default function RootLayout({
@@ -36,7 +38,6 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#ce1126" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icons/icon.svg" />
         {/* Prevent flash of wrong theme before React hydrates */}
         <script
           dangerouslySetInnerHTML={{

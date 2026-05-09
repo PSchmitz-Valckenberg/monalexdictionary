@@ -66,6 +66,7 @@ export default function Nav() {
             onClick={toggle}
             aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
             className="ml-2 p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            suppressHydrationWarning
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
@@ -77,6 +78,7 @@ export default function Nav() {
             onClick={toggle}
             aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
             className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+            suppressHydrationWarning
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
