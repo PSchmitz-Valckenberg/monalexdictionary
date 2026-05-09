@@ -143,7 +143,10 @@ async def generate_related(word: str, definition: str) -> list[dict]:
             max_output_tokens=200,
         ),
     )
-    suggestions: list[str] = json.loads(response.text).get("suggestions", [])
+    try:
+        suggestions: list[str] = json.loads(response.text).get("suggestions", [])
+    except (json.JSONDecodeError, AttributeError):
+        suggestions = []
 
     # Validate every suggestion against the real dictionary — never return
     # words that don't exist in the 14,200 entries.
@@ -152,7 +155,10 @@ async def generate_related(word: str, definition: str) -> list[dict]:
     for suggestion in suggestions:
         if len(entries) >= 5:
             break
-        hits = search_entries(suggestion.strip())
+        term = suggestion.strip()
+        if len(term) < 2:  # skip empty / single-char suggestions
+            continue
+        hits = search_entries(term)
         for hit in hits:
             if hit["word"].lower() not in seen:
                 entries.append(hit)

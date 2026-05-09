@@ -31,14 +31,14 @@ async def explain(body: ExplainRequest):
     }
 
 
-@router.get("/related")
-async def related(word: str, definition: str):
+@router.post("/related")
+async def related(body: ExplainRequest):
     _require_ai()
-    if not word.strip() or not definition.strip():
+    if not body.word.strip() or not body.definition.strip():
         raise HTTPException(status_code=400, detail="word and definition are required.")
-    entries = await generate_related(word.strip(), definition.strip())
+    entries = await generate_related(body.word.strip(), body.definition.strip())
     return {
-        "word": word,
+        "word": body.word,
         "related": entries,
     }
 

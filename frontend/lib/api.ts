@@ -60,8 +60,11 @@ export async function getRelatedWords(
   word: string,
   definition: string
 ): Promise<RelatedEntry[]> {
-  const params = new URLSearchParams({ word, definition });
-  const res = await fetch(`${API_BASE}/api/ai/related?${params}`);
+  const res = await fetch(`${API_BASE}/api/ai/related`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ word, definition }),
+  });
   if (!res.ok) throw new Error("Related failed");
   const data = await res.json();
   return data.related;

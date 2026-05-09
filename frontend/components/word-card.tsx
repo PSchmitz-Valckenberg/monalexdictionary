@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { explainWord, getRelatedWords, type Explanation, type RelatedEntry } from "@/lib/api";
 
 interface Props {
@@ -90,7 +91,7 @@ export default function WordCard({ word, definition, reversed = false }: Props) 
           ) : related && related.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {related.map((r) => (
-                <a
+                <Link
                   key={r.word}
                   href={`/search?q=${encodeURIComponent(r.word)}`}
                   className="group px-3 py-1 rounded-lg text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-[#ce1126] dark:hover:border-[#ce1126] transition-colors"
@@ -101,7 +102,7 @@ export default function WordCard({ word, definition, reversed = false }: Props) 
                   <span className="text-gray-400 dark:text-slate-500 text-xs ml-1.5">
                     {r.definition.length > 30 ? r.definition.slice(0, 30) + "…" : r.definition}
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           ) : related && related.length === 0 ? (
