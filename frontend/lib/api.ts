@@ -11,17 +11,16 @@ export interface SearchResponse {
   results: SearchResult[];
 }
 
-export interface Example {
-  fr: string;
-  monegasque: string;
-}
-
 export interface Explanation {
   summary_fr: string;
   usage_notes: string[];
-  examples: Example[];
   memory_tip: string;
   practice_question: string;
+}
+
+export interface RelatedEntry {
+  word: string;
+  definition: string;
 }
 
 export interface ExplainResponse {
@@ -55,6 +54,17 @@ export async function explainWord(
   });
   if (!res.ok) throw new Error("Explain failed");
   return res.json();
+}
+
+export async function getRelatedWords(
+  word: string,
+  definition: string
+): Promise<RelatedEntry[]> {
+  const params = new URLSearchParams({ word, definition });
+  const res = await fetch(`${API_BASE}/api/ai/related?${params}`);
+  if (!res.ok) throw new Error("Related failed");
+  const data = await res.json();
+  return data.related;
 }
 
 export async function getWordOfDay(): Promise<WordOfDay> {

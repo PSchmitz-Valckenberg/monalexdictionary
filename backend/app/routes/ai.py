@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.config import settings
-from app.services.ai import generate_explanation, get_word_of_day
+from app.services.ai import generate_explanation, generate_related, get_word_of_day
 
 router = APIRouter(prefix="/api/ai")
 
@@ -28,6 +28,18 @@ async def explain(body: ExplainRequest):
         "definition": body.definition,
         "model": settings.gemini_model,
         "explanation": explanation,
+    }
+
+
+@router.get("/related")
+async def related(word: str, definition: str):
+    _require_ai()
+    if not word.strip() or not definition.strip():
+        raise HTTPException(status_code=400, detail="word and definition are required.")
+    entries = await generate_related(word.strip(), definition.strip())
+    return {
+        "word": word,
+        "related": entries,
     }
 
 
