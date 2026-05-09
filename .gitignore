@@ -3,7 +3,7 @@
 venv/
 bin/
 include/
-lib/
+/lib/
 pyvenv.cfg
 click/
 *.dist-info/
