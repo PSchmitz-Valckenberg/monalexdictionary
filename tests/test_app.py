@@ -139,7 +139,7 @@ class MonalexAppTests(unittest.TestCase):
         self.assertEqual(response.get_json()["error"], "word and definition are required.")
 
     def test_ai_explain_reports_missing_configuration(self):
-        with patch.dict(app_module.os.environ, {"OPENAI_API_KEY": ""}):
+        with patch.dict(app_module.os.environ, {"GEMINI_API_KEY": ""}):
             response = self.client.post(
                 "/api/ai/explain",
                 json={"word": "bonjour", "definition": "bun giurnu"},
