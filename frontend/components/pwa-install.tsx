@@ -12,21 +12,23 @@ export default function PwaInstall() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     function handle(e: Event) {
       e.preventDefault();
       setPrompt(e as BeforeInstallPromptEvent);
     }
 
-    const timerId = window.setTimeout(() => {
-      if (localStorage.getItem("pwa-dismissed") === "1") {
-        setDismissed(true);
-        return;
-      }
-      window.addEventListener("beforeinstallprompt", handle);
-    }, 0);
+    window.addEventListener("beforeinstallprompt", handle);
+
+    if (localStorage.getItem("pwa-dismissed") === "1") {
+      queueMicrotask(() => {
+        if (mounted) setDismissed(true);
+      });
+    }
 
     return () => {
-      window.clearTimeout(timerId);
+      mounted = false;
       window.removeEventListener("beforeinstallprompt", handle);
     };
   }, []);

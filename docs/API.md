@@ -158,7 +158,6 @@ Example response:
     "model": "gemini-2.5-flash-lite"
   },
   "dictionary_cache": {
-    "path": "/tmp/monalex.sqlite3",
     "ready": true,
     "rows": 14200,
     "source_current": true

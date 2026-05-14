@@ -27,8 +27,8 @@ def _require_ai() -> None:
 
 @router.post("/explain")
 async def explain(body: ExplainRequest):
-    _require_ai()
     word, definition = _clean_entry(body)
+    _require_ai()
     explanation = await generate_explanation(word, definition)
     return {
         "word": word,
@@ -40,8 +40,8 @@ async def explain(body: ExplainRequest):
 
 @router.post("/related")
 async def related(body: ExplainRequest):
-    _require_ai()
     word, definition = _clean_entry(body)
+    _require_ai()
     entries = await generate_related(word, definition)
     return {
         "word": word,

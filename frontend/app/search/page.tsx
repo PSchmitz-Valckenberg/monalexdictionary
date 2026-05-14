@@ -111,9 +111,14 @@ function SearchContent() {
 
   useEffect(() => {
     const trimmedUrlQuery = urlQuery.trim();
-    if (!trimmedUrlQuery) return;
 
     const timerId = window.setTimeout(() => {
+      if (!trimmedUrlQuery) {
+        setQuery("");
+        void doSearch("");
+        return;
+      }
+
       setQuery(trimmedUrlQuery);
       void doSearch(trimmedUrlQuery);
     }, 0);
@@ -179,7 +184,6 @@ function SearchContent() {
           <button
             type="button"
             onClick={toggleDirection}
-            aria-label="Inverser la direction de recherche"
             aria-pressed={!isFrMon}
             className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors border border-gray-200 dark:border-slate-600"
             title="Inverser la direction de recherche"
@@ -267,7 +271,7 @@ function SearchContent() {
                 </div>
               ))}
             </div>
-          ) : results.length === 0 ? (
+          ) : error ? null : results.length === 0 ? (
             <p className="text-gray-400 dark:text-slate-500 text-sm">
               Aucun résultat pour «&nbsp;{query}&nbsp;».
             </p>

@@ -141,14 +141,17 @@ def ensure_db() -> None:
 def get_db_status() -> dict:
     db_path = os.path.abspath(settings.sqlite_path)
     status = {
-        "path": db_path,
         "ready": False,
     }
 
     if not os.path.exists(db_path):
         return status
 
-    conn = sqlite3.connect(db_path)
+    try:
+        conn = sqlite3.connect(db_path)
+    except (OSError, sqlite3.Error):
+        return status
+
     try:
         count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
         signature = conn.execute(
