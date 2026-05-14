@@ -12,6 +12,14 @@ class ExplainRequest(BaseModel):
     definition: str
 
 
+def _clean_entry(body: ExplainRequest) -> tuple[str, str]:
+    word = body.word.strip()
+    definition = body.definition.strip()
+    if not word or not definition:
+        raise HTTPException(status_code=400, detail="word and definition are required.")
+    return word, definition
+
+
 def _require_ai() -> None:
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="Assistant IA non configuré.")
@@ -20,12 +28,11 @@ def _require_ai() -> None:
 @router.post("/explain")
 async def explain(body: ExplainRequest):
     _require_ai()
-    if not body.word.strip() or not body.definition.strip():
-        raise HTTPException(status_code=400, detail="word and definition are required.")
-    explanation = await generate_explanation(body.word.strip(), body.definition.strip())
+    word, definition = _clean_entry(body)
+    explanation = await generate_explanation(word, definition)
     return {
-        "word": body.word,
-        "definition": body.definition,
+        "word": word,
+        "definition": definition,
         "model": settings.gemini_model,
         "explanation": explanation,
     }
@@ -34,11 +41,10 @@ async def explain(body: ExplainRequest):
 @router.post("/related")
 async def related(body: ExplainRequest):
     _require_ai()
-    if not body.word.strip() or not body.definition.strip():
-        raise HTTPException(status_code=400, detail="word and definition are required.")
-    entries = await generate_related(body.word.strip(), body.definition.strip())
+    word, definition = _clean_entry(body)
+    entries = await generate_related(word, definition)
     return {
-        "word": body.word,
+        "word": word,
         "related": entries,
     }
 

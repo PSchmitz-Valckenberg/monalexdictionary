@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.config import settings
+from app.database.sqlite import get_db_status
 
 router = APIRouter()
 
@@ -15,4 +16,5 @@ def health():
             "configured": bool(settings.gemini_api_key),
             "model": settings.gemini_model,
         },
+        "dictionary_cache": get_db_status(),
     }
