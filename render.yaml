@@ -14,6 +14,8 @@ services:
         value: "0.3.0"
       - key: SITE_URL
         value: "https://monalexdictionary.onrender.com"
+      - key: CORS_ORIGINS
+        value: "*"
       - key: SEARCH_LIMIT
         value: "50"
       - key: GEMINI_MODEL

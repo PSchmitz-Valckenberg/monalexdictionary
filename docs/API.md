@@ -1,24 +1,25 @@
 # API Reference
 
-Monalex serves the public dictionary through HTML pages and a small JSON API.
-The JSON endpoints are intentionally simple so they can be used by a future
-frontend, mobile app, or data cleanup script without scraping rendered HTML.
+Monalex exposes a small FastAPI JSON API for dictionary search, AI-assisted
+study cards, related entries, and service health.
+
+Local examples assume the backend is running at `http://127.0.0.1:8000`.
 
 ## `GET /api/search`
 
-Searches the configured dictionary table.
+Searches the generated SQLite dictionary cache. Empty searches do not touch the
+database.
 
 Query parameters:
 
 | Name | Required | Description |
 |------|----------|-------------|
-| `q` | No | Search term for dictionary lookups. |
-| `searchInput` | No | Backward-compatible alias used by the HTML form. |
+| `q` | No | Search term matched against French words and Monégasque definitions. |
 
 Example:
 
 ```bash
-curl "http://127.0.0.1:5000/api/search?q=bonjour"
+curl "http://127.0.0.1:8000/api/search?q=bonjour"
 ```
 
 Successful response:
@@ -36,7 +37,7 @@ Successful response:
 }
 ```
 
-Empty searches do not touch the database:
+Empty response:
 
 ```json
 {
@@ -46,36 +47,15 @@ Empty searches do not touch the database:
 }
 ```
 
-Database connection errors return HTTP `503`:
-
-```json
-{
-  "query": "bonjour",
-  "error": "Connexion à la base de données impossible.",
-  "results": []
-}
-```
-
-## `GET /search`
-
-Renders the browser-facing search page. It accepts the same `searchInput`
-parameter used by the form.
-
-Example:
-
-```bash
-curl "http://127.0.0.1:5000/search?searchInput=bonjour"
-```
-
 ## `POST /api/ai/explain`
 
-Generates a learner-friendly study card for one dictionary result. This endpoint
-is optional and requires `OPENAI_API_KEY`.
+Generates a learner-friendly French explanation for one dictionary entry.
+Requires `GEMINI_API_KEY`.
 
 Request:
 
 ```bash
-curl -X POST "http://127.0.0.1:5000/api/ai/explain" \
+curl -X POST "http://127.0.0.1:8000/api/ai/explain" \
   -H "Content-Type: application/json" \
   -d '{"word":"bonjour","definition":"bun giurnu"}'
 ```
@@ -86,18 +66,12 @@ Successful response:
 {
   "word": "bonjour",
   "definition": "bun giurnu",
-  "model": "gpt-5.4-mini",
+  "model": "gemini-2.5-flash-lite",
   "explanation": {
     "summary_fr": "Une salutation simple et quotidienne.",
     "usage_notes": [
       "À utiliser pour saluer quelqu'un.",
       "Convient dans un contexte poli ou neutre."
-    ],
-    "examples": [
-      {
-        "fr": "Bonjour.",
-        "monegasque": "Bun giurnu."
-      }
     ],
     "memory_tip": "Rapproche bun de bon et giurnu de jour.",
     "practice_question": "Comment saluerais-tu une personne le matin ?"
@@ -105,28 +79,72 @@ Successful response:
 }
 ```
 
-If the key is missing, the endpoint returns HTTP `503` with a configuration
-message. The browser UI surfaces this message inside the result card.
+If AI is not configured, FastAPI returns HTTP `503`:
 
-## Conjugation Pages
+```json
+{
+  "detail": "Assistant IA non configuré."
+}
+```
 
-The app keeps the original `.html` routes for compatibility and also exposes
-cleaner URLs for navigation and sharing:
+## `POST /api/ai/related`
 
-| Clean URL | Legacy URL |
-|-----------|------------|
-| `/conjugaison/premier` | `/premier.html` |
-| `/conjugaison/deuxieme` | `/deuxieme.html` |
-| `/conjugaison/troisieme` | `/troisieme.html` |
-| `/conjugaison/etre` | `/etre_conjugation` |
-| `/conjugaison/avoir` | `/avoir_conjugation` |
-| `/exceptions/premier` | `/exceptions_premier.html` |
-| `/exceptions/deuxieme` | `/exception_deuxieme.html` |
+Asks Gemini for candidate French related words, then validates every suggestion
+against the real dictionary before returning it. This endpoint never returns
+AI-only entries that are absent from `dictionary.sql`.
+
+Request:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/api/ai/related" \
+  -H "Content-Type: application/json" \
+  -d '{"word":"bonjour","definition":"bun giurnu"}'
+```
+
+Successful response:
+
+```json
+{
+  "word": "bonjour",
+  "related": [
+    {
+      "word": "salut",
+      "definition": "..."
+    }
+  ]
+}
+```
+
+## `GET /api/ai/word-of-day`
+
+Returns a deterministic daily dictionary entry with a cached AI explanation.
+Requires `GEMINI_API_KEY`.
+
+Example:
+
+```bash
+curl "http://127.0.0.1:8000/api/ai/word-of-day"
+```
+
+Successful response:
+
+```json
+{
+  "date": "2026-05-14",
+  "word": "bonjour",
+  "definition": "bun giurnu",
+  "explanation": {
+    "summary_fr": "Une salutation simple et quotidienne.",
+    "usage_notes": [],
+    "memory_tip": "Rapproche bun de bon.",
+    "practice_question": "Comment saluerais-tu quelqu'un ?"
+  }
+}
+```
 
 ## `GET /healthz`
 
-Returns lightweight service metadata. It does not query MySQL, which keeps it
-safe for load balancer and platform health checks.
+Returns lightweight service metadata for Render or another load balancer.
 
 Example response:
 
@@ -134,25 +152,25 @@ Example response:
 {
   "service": "Monalex Dictionary",
   "status": "ok",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "ai": {
     "configured": false,
-    "model": "gpt-5.4-mini"
+    "model": "gemini-2.5-flash-lite"
   },
   "dictionary_cache": {
-    "enabled": true,
-    "path": "/tmp/monalex_dictionary.sqlite3",
+    "path": "/tmp/monalex.sqlite3",
     "ready": true,
-    "rows": 14200
+    "rows": 14200,
+    "source_current": true
   }
 }
 ```
 
 ## Discovery
 
-The app also exposes standard crawler discovery files:
+FastAPI also exposes generated OpenAPI documentation:
 
 | Route | Description |
 |-------|-------------|
-| `/robots.txt` | Allows public crawling and references the sitemap. |
-| `/sitemap.xml` | Lists the main public HTML pages. |
+| `/docs` | Swagger UI for manual endpoint exploration. |
+| `/openapi.json` | Machine-readable OpenAPI schema. |
