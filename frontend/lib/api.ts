@@ -1,4 +1,25 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(
+  /\/+$/,
+  ""
+);
+
+function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
+}
+
+type FetchInit = RequestInit & {
+  next?: {
+    revalidate?: number;
+  };
+};
+
+async function fetchJson<T>(url: string, init?: FetchInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
 
 export interface SearchResult {
   word: string;
@@ -38,42 +59,39 @@ export interface WordOfDay {
 }
 
 export async function searchDictionary(q: string): Promise<SearchResponse> {
-  const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(q)}`);
-  if (!res.ok) throw new Error("Search failed");
-  return res.json();
+  return fetchJson<SearchResponse>(
+    apiUrl(`/api/search?q=${encodeURIComponent(q)}`)
+  );
 }
 
 export async function explainWord(
   word: string,
   definition: string
 ): Promise<ExplainResponse> {
-  const res = await fetch(`${API_BASE}/api/ai/explain`, {
+  return fetchJson<ExplainResponse>(apiUrl("/api/ai/explain"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ word, definition }),
   });
-  if (!res.ok) throw new Error("Explain failed");
-  return res.json();
 }
 
 export async function getRelatedWords(
   word: string,
   definition: string
 ): Promise<RelatedEntry[]> {
-  const res = await fetch(`${API_BASE}/api/ai/related`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ word, definition }),
-  });
-  if (!res.ok) throw new Error("Related failed");
-  const data = await res.json();
+  const data = await fetchJson<{ related: RelatedEntry[] }>(
+    apiUrl("/api/ai/related"),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ word, definition }),
+    }
+  );
   return data.related;
 }
 
 export async function getWordOfDay(): Promise<WordOfDay> {
-  const res = await fetch(`${API_BASE}/api/ai/word-of-day`, {
+  return fetchJson<WordOfDay>(apiUrl("/api/ai/word-of-day"), {
     next: { revalidate: 3600 },
   });
-  if (!res.ok) throw new Error("Word of day failed");
-  return res.json();
 }

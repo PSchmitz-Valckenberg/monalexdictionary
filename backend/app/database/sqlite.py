@@ -14,6 +14,16 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+def _ensure_ai_cache_table(conn: sqlite3.Connection) -> None:
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS ai_response_cache (
+            cache_key TEXT PRIMARY KEY,
+            response_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+    """)
+
+
 def _sql_signature() -> str:
     stat = os.stat(settings.dictionary_sql_path)
     return f"{stat.st_mtime_ns}:{stat.st_size}"
@@ -87,6 +97,8 @@ def ensure_db() -> None:
                 ).fetchone()
                 count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
                 if sig and sig[0] == _sql_signature() and count > 0:
+                    _ensure_ai_cache_table(conn)
+                    conn.commit()
                     return
             except sqlite3.Error:
                 pass
@@ -104,12 +116,8 @@ def ensure_db() -> None:
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL
                 );
-                CREATE TABLE ai_response_cache (
-                    cache_key TEXT PRIMARY KEY,
-                    response_json TEXT NOT NULL,
-                    created_at INTEGER NOT NULL
-                );
             """)
+            _ensure_ai_cache_table(conn)
             conn.executemany(
                 "INSERT INTO dictionary (id, word, definition) VALUES (?, ?, ?)",
                 _iter_entries(),
@@ -128,3 +136,37 @@ def ensure_db() -> None:
             conn.commit()
         finally:
             conn.close()
+
+
+def get_db_status() -> dict:
+    db_path = os.path.abspath(settings.sqlite_path)
+    status = {
+        "ready": False,
+    }
+
+    if not os.path.exists(db_path):
+        return status
+
+    try:
+        conn = sqlite3.connect(db_path)
+    except (OSError, sqlite3.Error):
+        return status
+
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM dictionary").fetchone()[0]
+        signature = conn.execute(
+            "SELECT value FROM cache_metadata WHERE key = 'source_signature'"
+        ).fetchone()
+        status.update(
+            {
+                "ready": count > 0,
+                "rows": count,
+                "source_current": bool(signature and signature[0] == _sql_signature()),
+            }
+        )
+    except (OSError, sqlite3.Error):
+        status["ready"] = False
+    finally:
+        conn.close()
+
+    return status

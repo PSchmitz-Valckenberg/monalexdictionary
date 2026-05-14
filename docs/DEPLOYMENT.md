@@ -1,64 +1,96 @@
 # Deployment
 
-Monalex is ready to run as a Python web service with Gunicorn. The simplest
-deployment target is Render, using the included `render.yaml` blueprint.
+The current production shape is:
 
-## Render
+- Backend: FastAPI on Render, configured by `render.yaml`.
+- Frontend: Next.js on Vercel, rooted at `frontend/`.
 
-1. Push the repository to GitHub.
-2. In Render, create a new Blueprint or Web Service from the repository.
-3. Render can read `render.yaml`; otherwise use these settings manually:
+## Render Backend
+
+The included `render.yaml` defines the backend service:
 
 | Setting | Value |
 |---------|-------|
-| Runtime | `Python 3` |
+| Root Directory | `backend` |
+| Runtime | Python |
 | Build Command | `pip install -r requirements.txt` |
-| Start Command | `gunicorn app:app` |
+| Start Command | `gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2` |
 | Health Check Path | `/healthz` |
 
-## Required Environment Variables
+Render should provide `GEMINI_API_KEY` as a secret environment variable when AI
+features are enabled.
 
-For a demo deployment with the generated SQLite fallback:
+Recommended backend environment:
 
 ```env
-APP_VERSION=0.2.0
+PYTHON_VERSION=3.11.5
+APP_VERSION=0.3.0
+SITE_URL=https://monalexdictionary.onrender.com
+CORS_ORIGINS=*
 SEARCH_LIMIT=50
-ENABLE_SQLITE_FALLBACK=1
-SQLITE_FALLBACK_PATH=/tmp/monalex_dictionary.sqlite3
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-5.4-mini
+GEMINI_MODEL=gemini-2.5-flash-lite
 AI_INPUT_LIMIT=1200
+SQLITE_PATH=/tmp/monalex.sqlite3
+GEMINI_API_KEY=...
 ```
 
-`OPENAI_API_KEY` must be set as a secret environment variable in the hosting
-dashboard. Do not commit it.
+`dictionary.sql` is the source of truth for the SQLite cache. The backend builds
+or refreshes the cache on startup when the SQL file changes.
 
-## Optional MySQL Production Mode
+## Vercel Frontend
 
-For a dedicated MySQL database, set:
+1. Import the GitHub repository in Vercel.
+2. Set the root directory to `frontend/`.
+3. Set `NEXT_PUBLIC_API_URL` to the Render backend URL.
+4. Deploy with Node.js `20.9.0` or newer. Next.js 16 will not build on Node 18.
+
+Recommended frontend environment:
 
 ```env
-ENABLE_SQLITE_FALLBACK=0
-MYSQL_HOST=...
-MYSQL_PORT=3306
-MYSQL_USER=...
-MYSQL_PASSWORD=...
-MYSQL_DATABASE=dictionary
-MYSQL_TABLE=dictionary
+NEXT_PUBLIC_API_URL=https://monalexdictionary.onrender.com
 ```
 
-Import `dictionary.sql` into that database before disabling the fallback.
+## Local Development
 
-## Local Production Smoke Test
+Backend:
 
 ```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-gunicorn app:app
+cp .env.example .env
+uvicorn app.main:app --reload --port 8000
 ```
 
-Open `http://127.0.0.1:8000`.
+Frontend:
 
-## Health Check
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
 
-`GET /healthz` returns service metadata and whether the AI helper is configured.
-Hosting platforms should use this path for health checks.
+Open `http://localhost:3000` for the app and `http://localhost:8000/docs` for
+the FastAPI docs.
+
+## Smoke Checks
+
+Backend health:
+
+```bash
+curl http://127.0.0.1:8000/healthz
+```
+
+Frontend static checks:
+
+```bash
+cd frontend
+npm run lint
+npm exec -- tsc --noEmit
+npm run build
+```
+
+`npm run build` requires Node.js `20.9.0` or newer because this project uses
+Next.js 16.

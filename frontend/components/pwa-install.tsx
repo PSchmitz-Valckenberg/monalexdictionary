@@ -12,16 +12,25 @@ export default function PwaInstall() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("pwa-dismissed") === "1") {
-      setDismissed(true);
-      return;
-    }
+    let mounted = true;
+
     function handle(e: Event) {
       e.preventDefault();
       setPrompt(e as BeforeInstallPromptEvent);
     }
+
     window.addEventListener("beforeinstallprompt", handle);
-    return () => window.removeEventListener("beforeinstallprompt", handle);
+
+    if (localStorage.getItem("pwa-dismissed") === "1") {
+      queueMicrotask(() => {
+        if (mounted) setDismissed(true);
+      });
+    }
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("beforeinstallprompt", handle);
+    };
   }, []);
 
   if (!prompt || dismissed) return null;
@@ -36,6 +45,7 @@ export default function PwaInstall() {
       </p>
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={async () => {
             await prompt.prompt();
             setPrompt(null);
@@ -45,6 +55,7 @@ export default function PwaInstall() {
           Installer
         </button>
         <button
+          type="button"
           onClick={() => {
             localStorage.setItem("pwa-dismissed", "1");
             setDismissed(true);

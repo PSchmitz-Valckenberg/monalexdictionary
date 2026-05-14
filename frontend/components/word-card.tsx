@@ -54,21 +54,29 @@ export default function WordCard({ word, definition, reversed = false }: Props) 
 
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 hover:border-gray-300 dark:hover:border-slate-600 transition-colors bg-white dark:bg-slate-800/50">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 dark:text-slate-100">{primary}</p>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{secondary}</p>
+          <p className="font-semibold text-gray-900 dark:text-slate-100 break-words">
+            {primary}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5 break-words">
+            {secondary}
+          </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
+            type="button"
             onClick={handleRelated}
+            aria-expanded={relatedOpen}
             className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-100 hover:border-gray-300 dark:hover:border-slate-500 transition-colors"
             title="Mots associés"
           >
             ≈ Associés
           </button>
           <button
+            type="button"
             onClick={handleExplain}
+            aria-expanded={open}
             className="px-3 py-1.5 bg-[#ce1126] text-white text-xs font-medium rounded-lg hover:bg-[#a50e1f] transition-colors"
           >
             Assistant IA

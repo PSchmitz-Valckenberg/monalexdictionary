@@ -93,6 +93,7 @@ Frontend runs at `http://localhost:3000`.
 | `SQLITE_PATH` | `/tmp/monalex.sqlite3` | SQLite database path. |
 | `SITE_URL` | — | Canonical public URL for metadata. |
 | `APP_VERSION` | `0.3.0` | Version string returned by `/healthz`. |
+| `CORS_ORIGINS` | `*` | Comma-separated allowed origins for browser API calls. |
 
 ### Frontend (`frontend/.env.local`)
 
